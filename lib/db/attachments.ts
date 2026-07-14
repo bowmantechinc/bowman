@@ -9,8 +9,8 @@ export interface Attachment {
   name: string;
   mimeType: string;
   size: number;
-  driveFileId: string;
-  driveUrl: string;
+  storagePath: string;
+  publicUrl: string;
   uploadedBy: string;
   createdAt: string;
 }
@@ -22,8 +22,8 @@ function toItem(row: Row): Attachment {
     name: row.name,
     mimeType: row.mimeType,
     size: toNumber(row.size, 0),
-    driveFileId: row.driveFileId,
-    driveUrl: row.driveUrl,
+    storagePath: row.storagePath,
+    publicUrl: row.publicUrl,
     uploadedBy: row.uploadedBy,
     createdAt: row.createdAt,
   };
@@ -36,8 +36,8 @@ function toRow(item: Partial<Attachment>): Row {
   if (item.name !== undefined) row.name = item.name;
   if (item.mimeType !== undefined) row.mimeType = item.mimeType;
   if (item.size !== undefined) row.size = String(item.size);
-  if (item.driveFileId !== undefined) row.driveFileId = item.driveFileId;
-  if (item.driveUrl !== undefined) row.driveUrl = item.driveUrl;
+  if (item.storagePath !== undefined) row.storagePath = item.storagePath;
+  if (item.publicUrl !== undefined) row.publicUrl = item.publicUrl;
   if (item.uploadedBy !== undefined) row.uploadedBy = item.uploadedBy;
   if (item.createdAt !== undefined) row.createdAt = item.createdAt;
   return row;

@@ -59,7 +59,7 @@ export function AttachmentsCard({ projectId, attachments }: { projectId: string;
                 className="flex items-center gap-2.5 rounded-md border px-3 py-2 text-sm"
               >
                 <FileText className="text-muted-foreground size-4 shrink-0" />
-                <a href={a.driveUrl} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 truncate hover:underline">
+                <a href={a.publicUrl} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 truncate hover:underline">
                   {a.name}
                 </a>
                 <span className="text-muted-foreground shrink-0 text-xs">{formatBytes(a.size)}</span>

@@ -5,6 +5,8 @@
 import { config } from "dotenv";
 import path from "node:path";
 import postgres from "postgres";
+import { createClient } from "@supabase/supabase-js";
+import ws from "ws";
 
 config({ path: path.resolve(__dirname, "../.env.local") });
 
@@ -23,7 +25,7 @@ const ALL_SCHEMAS: TableSchema[] = [
   { name: "Risks", headers: ["id", "projectId", "description", "category", "likelihood", "impact", "level", "ownerId", "mitigation", "createdAt"] },
   { name: "Vendors", headers: ["id", "name", "contact", "email", "licenseStart", "licenseEnd", "supportLevel", "notes"] },
   { name: "Resources", headers: ["id", "name", "icon", "detail", "progress", "color", "label"] },
-  { name: "Attachments", headers: ["id", "projectId", "name", "mimeType", "size", "driveFileId", "driveUrl", "uploadedBy", "createdAt"] },
+  { name: "Attachments", headers: ["id", "projectId", "name", "mimeType", "size", "storagePath", "publicUrl", "uploadedBy", "createdAt"] },
   { name: "Invites", headers: ["id", "email", "role", "labelId", "projectId", "invitedBy", "status", "createdAt"] },
   { name: "Activity", headers: ["id", "icon", "text", "actorId", "createdAt"] },
   { name: "KnowledgeArticles", headers: ["id", "title", "body", "tags", "linkedView", "createdBy", "updatedAt"] },
@@ -82,6 +84,24 @@ async function main() {
         l.color,
       ]);
     }
+  }
+
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (supabaseUrl && supabaseKey) {
+    console.log("Ensuring 'attachments' storage bucket exists...");
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: { persistSession: false },
+      realtime: { transport: ws as unknown as typeof WebSocket },
+    });
+    const { data: buckets } = await supabase.storage.listBuckets();
+    if (!buckets?.some((b) => b.name === "attachments")) {
+      const { error } = await supabase.storage.createBucket("attachments", { public: true });
+      if (error) console.warn("Could not create storage bucket:", error.message);
+      else console.log("Created 'attachments' storage bucket.");
+    }
+  } else {
+    console.warn("Skipping storage bucket setup — SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY not set.");
   }
 
   console.log("Setup complete. Run `npm run dev` and open /setup to create the first admin.");

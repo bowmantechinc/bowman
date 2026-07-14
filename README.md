@@ -2,32 +2,34 @@
 
 A professional project management tool — projects, kanban task boards, timelines,
 a risk register, vendors, resources, a knowledge base, and team/role management —
-built on Next.js, with a Google Sheet as its database.
+built on Next.js, with Postgres (Supabase) as its database.
 
-## Why a Google Sheet?
-
-No database to provision: point the app at any Google Sheet (shared with a
-service account) and it creates the tabs it needs. Your team can also open the
-sheet directly for ad-hoc exports, backups, or pivot tables.
-
-The browser never talks to Google directly — all Sheets/Drive access happens
-server-side through a service account, and the app authenticates its own users
-with hashed passwords and signed session cookies (see [Architecture](#architecture)).
+The browser never talks to Postgres or Google directly — all database and Drive
+access happens server-side, and the app authenticates its own users with hashed
+passwords and signed session cookies (see [Architecture](#architecture)).
 
 ## Setup
 
-### 1. Create a Google Cloud service account
+### 1. Create a Postgres database
+
+The easiest path is a free [Supabase](https://supabase.com) project:
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. Go to **Settings → Database → Connection string**, and copy the **pooled**
+   connection string (port `6543`, includes `pgbouncer=true`) — this is the one
+   that works well from serverless environments like Vercel.
+
+Any other Postgres works too — just set `POSTGRES_URL` to its connection string.
+
+### 2. Create a Google Cloud service account (for file attachments only)
+
+Project attachments upload to a Drive folder owned by a service account. This
+step is only needed if you want that feature.
 
 1. In the [Google Cloud Console](https://console.cloud.google.com/), create (or pick) a project.
-2. Enable the **Google Sheets API** and **Google Drive API**.
+2. Enable the **Google Drive API**.
 3. Go to **IAM & Admin → Service Accounts → Create Service Account**.
 4. Open the new service account → **Keys → Add Key → Create new key → JSON**. Save the file.
-
-### 2. Create and share the spreadsheet
-
-1. Create a new Google Sheet (any name).
-2. Copy its ID from the URL: `https://docs.google.com/spreadsheets/d/THIS_PART/edit`.
-3. Click **Share** and add the service account's `client_email` (from the JSON key) as an **Editor**.
 
 ### 3. Configure environment variables
 
@@ -37,9 +39,9 @@ cp .env.local.example .env.local
 
 Fill in:
 
-- `GOOGLE_SERVICE_ACCOUNT_EMAIL` — the `client_email` from the JSON key.
-- `GOOGLE_PRIVATE_KEY` — the `private_key` from the JSON key (keep the quotes and `\n` sequences).
-- `GOOGLE_SHEET_ID` — the spreadsheet ID from step 2.
+- `POSTGRES_URL` — the connection string from step 1.
+- `GOOGLE_SERVICE_ACCOUNT_EMAIL` / `GOOGLE_PRIVATE_KEY` — from the JSON key in step 2
+  (keep the quotes and `\n` sequences on the private key).
 - `AUTH_SECRET` — a random secret for signing session cookies: `openssl rand -base64 32`.
 - `RESEND_API_KEY` — needed to send member invitation emails. Sign up free at
   [resend.com](https://resend.com), create an API key, and paste it in. Without a
@@ -47,15 +49,16 @@ Fill in:
   recipient — fine for getting started. `RESEND_FROM_EMAIL` and `NEXT_PUBLIC_APP_URL`
   are optional overrides (see comments in `.env.local.example`).
 
-### 4. Create the sheet tabs
+### 4. Create the database tables
 
 ```bash
 npm install
 npm run setup
 ```
 
-This creates all required tabs (Members, Projects, Tasks, Risks, Vendors, Resources,
-Labels, Roles, etc.) with headers, and seeds a default set of roles and labels.
+This creates all required tables (Members, Projects, Tasks, Risks, Vendors, Resources,
+Labels, Roles, etc.) if they don't already exist, and seeds a default set of roles
+and labels.
 
 ### 5. Run it
 
@@ -63,7 +66,7 @@ Labels, Roles, etc.) with headers, and seeds a default set of roles and labels.
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — since the Members tab is empty,
+Open [http://localhost:3000](http://localhost:3000) — since the Members table is empty,
 you'll land on **Set up** to create the first admin account. After that, sign in
 normally and invite the rest of the team by email from **Members** — pick their role
 and (optionally) a project to add them to as soon as they accept.
@@ -71,13 +74,16 @@ and (optionally) a project to add them to as soon as they accept.
 ## Architecture
 
 - **Next.js 16 (App Router) + TypeScript**, Tailwind CSS v4, shadcn/ui.
-- **Data layer** (`lib/google/sheet-repo.ts`) does targeted per-row reads/writes/deletes
-  against the Sheet (not a full-tab rewrite on every save), keyed by each tab's header
-  row and cached sheet/tab IDs — avoids clobbering concurrent edits.
+- **Data layer** (`lib/db/pg-repo.ts`) is a small generic CRUD layer over `postgres.js`,
+  with a short-lived read cache (invalidated on writes) so a page reading the same
+  table multiple times doesn't round-trip to the database each time.
 - **Auth** (`lib/auth/`) is hand-rolled: passwords are hashed with bcrypt, sessions are
   signed JWTs (`jose`) in an httpOnly cookie, verified in `proxy.ts` (Next's renamed
   `middleware.ts`) for route protection and again per-request via `requireSession()`.
-- **File attachments** upload to a Drive folder owned by the service account and are
+- **Invitations** (`lib/actions/invites.ts`) send email via Resend with a link to
+  `/accept-invite/[id]`, where the invitee sets their name/password and — if a project
+  was picked — is added to it automatically on acceptance.
+- **File attachments** upload to a Drive folder owned by a Google service account and are
   shared "anyone with the link can view" so teammates without Google accounts can open them.
 - Entity CRUD lives in `lib/db/*.ts` (typed repositories) and `lib/actions/*.ts`
   (Server Actions used directly by forms via `useActionState`).
@@ -85,16 +91,18 @@ and (optionally) a project to add them to as soon as they accept.
 ## Project structure
 
 ```
-app/(app)/        Authenticated app shell: dashboard, projects, tasks, timeline,
-                   risks, vendors, resources, members, settings, knowledge base
-app/login/         Sign-in
-app/setup/         First-run admin bootstrap (only reachable while Members is empty)
-components/        UI components, grouped by feature
-lib/db/            Typed repositories per Google Sheet tab
-lib/actions/       Server Actions (create/update/delete for each entity)
-lib/google/        Sheets/Drive client + generic row-level CRUD
-scripts/setup-sheets.ts   One-time tab/header bootstrap (`npm run setup`)
-legacy/            The original single-file HTML/Apps Script version, kept for reference
+app/(app)/           Authenticated app shell: dashboard, projects, tasks, timeline,
+                      risks, vendors, resources, members, settings, knowledge base
+app/login/            Sign-in
+app/setup/            First-run admin bootstrap (only reachable while Members is empty)
+app/accept-invite/    Public invite-acceptance flow
+components/           UI components, grouped by feature
+lib/db/               Typed repositories per table + the Postgres client/CRUD layer
+lib/actions/          Server Actions (create/update/delete for each entity)
+lib/google/           Drive client (project file attachments only)
+lib/email.ts           Resend client for invitation emails
+scripts/setup-db.ts    One-time table bootstrap (`npm run setup`)
+legacy/                The original single-file HTML/Apps Script version, kept for reference
 ```
 
 ## Notes

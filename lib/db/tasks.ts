@@ -1,5 +1,5 @@
 import "server-only";
-import { createRepo, type Row } from "@/lib/google/sheet-repo";
+import { createRepo, type Row } from "@/lib/db/pg-repo";
 import { TASKS_SCHEMA } from "./schema";
 import { TASK_STATUSES, TASK_PRIORITIES, type TaskStatus, type TaskPriority } from "@/lib/constants";
 

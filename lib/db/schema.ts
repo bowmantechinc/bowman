@@ -1,5 +1,5 @@
 import "server-only";
-import type { TabSchema } from "@/lib/google/sheet-repo";
+import type { TableSchema as TabSchema } from "@/lib/db/pg-repo";
 
 export const MEMBERS_SCHEMA: TabSchema = {
   name: "Members",

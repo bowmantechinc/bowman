@@ -1,5 +1,5 @@
 import "server-only";
-import { createRepo, type Row } from "@/lib/google/sheet-repo";
+import { createRepo, type Row } from "@/lib/db/pg-repo";
 import { INVITES_SCHEMA } from "./schema";
 
 export type InviteStatus = "pending" | "accepted" | "revoked";

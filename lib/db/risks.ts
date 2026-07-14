@@ -1,5 +1,5 @@
 import "server-only";
-import { createRepo, type Row } from "@/lib/google/sheet-repo";
+import { createRepo, type Row } from "@/lib/db/pg-repo";
 import { RISKS_SCHEMA } from "./schema";
 import { RISK_LEVELS, type RiskLevel } from "@/lib/constants";
 

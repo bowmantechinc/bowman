@@ -1,0 +1,2798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MSSP Deploy · Project Manager</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.x/dist/tabler-icons.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+/* ── TOKENS ── */
+:root{
+  --ink-900:#0f1117;--ink-800:#1e2130;--ink-700:#2d3245;--ink-600:#3f4560;
+  --ink-400:#6b728e;--ink-300:#9299b0;--ink-200:#c4c8d8;--ink-100:#e8eaf2;--ink-50:#f4f5f9;
+  --accent:#1a6fdb;--accent-light:#e8f0fd;--accent-dark:#1255b0;
+  --green:#1a8a5a;--green-light:#e4f5ed;
+  --amber:#c47c0a;--amber-light:#fef3dc;
+  --red:#c0352a;--red-light:#fdecea;
+  --purple:#5448c8;--purple-light:#eeedfb;
+  --teal:#0f7c6e;--teal-light:#e2f4f1;
+  --coral:#c4521a;--coral-light:#fdeee6;
+  --radius:6px;--radius-lg:10px;--radius-xl:14px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 12px rgba(0,0,0,.06);
+  --shadow-lg:0 4px 16px rgba(0,0,0,.12),0 12px 40px rgba(0,0,0,.09);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+@media(prefers-color-scheme:dark){:root{
+  --ink-900:#f0f1f7;--ink-800:#cdd0de;--ink-700:#9ea3bc;--ink-600:#767c98;
+  --ink-400:#545870;--ink-300:#3a3e52;--ink-200:#2a2e40;--ink-100:#1e2130;--ink-50:#181b28;
+  --accent:#4d8fe8;--accent-light:#1a2540;--accent-dark:#6aaaf5;
+  --green:#2db87a;--green-light:#0f2a1e;
+  --amber:#e8a020;--amber-light:#2a1f08;
+  --red:#e05850;--red-light:#2a100e;
+  --purple:#8b84e8;--purple-light:#1a1840;
+  --teal:#2bc4ae;--teal-light:#0a2420;
+  --coral:#e87040;--coral-light:#2a150a;
+  --shadow:0 1px 3px rgba(0,0,0,.3),0 4px 12px rgba(0,0,0,.2);
+  --shadow-lg:0 4px 16px rgba(0,0,0,.4),0 12px 40px rgba(0,0,0,.3);
+}}
+
+body{font-family:var(--font);background:var(--ink-50);color:var(--ink-900);height:100vh;overflow:hidden;font-size:14px;line-height:1.5}
+
+/* ══ FULLSCREEN SCREENS ══ */
+.screen{position:fixed;inset:0;z-index:300;background:var(--ink-50);display:flex;align-items:center;justify-content:center}
+.screen.hidden{display:none}
+.screen-wrap{width:100%;max-width:520px;padding:20px}
+.screen-card{background:var(--ink-100);border:1px solid var(--ink-200);border-radius:var(--radius-xl);padding:36px;box-shadow:var(--shadow-lg)}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.brand-icon{width:38px;height:38px;background:var(--accent);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px}
+.brand-name{font-size:18px;font-weight:700;color:var(--ink-900);letter-spacing:-.02em}
+.screen-sub{font-size:12px;color:var(--ink-400);margin-bottom:28px;margin-left:48px;margin-top:-2px}
+.step-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:14px}
+.step-num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-text{font-size:13px;color:var(--ink-700);line-height:1.6}
+.step-text a{color:var(--accent);text-decoration:none}
+.step-text a:hover{text-decoration:underline}
+.step-text code{background:var(--ink-50);padding:1px 5px;border-radius:4px;font-size:11px;border:1px solid var(--ink-200);color:var(--accent);font-family:monospace}
+
+/* ══ FORM ELEMENTS ══ */
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:12px;font-weight:600;color:var(--ink-600);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+.fg input,.fg select,.fg textarea{
+  width:100%;padding:9px 12px;font-size:13px;font-family:var(--font);
+  background:var(--ink-50);border:1px solid var(--ink-200);border-radius:var(--radius);
+  color:var(--ink-900);outline:none;transition:border-color .15s,box-shadow .15s
+}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,111,219,.12)}
+.fg textarea{resize:vertical;min-height:68px}
+.fg-hint{font-size:11px;color:var(--ink-400);margin-top:4px}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.err-msg{font-size:12px;color:var(--red);background:var(--red-light);border-radius:var(--radius);padding:8px 12px;margin-bottom:12px;display:none;align-items:center;gap:7px}
+.info-msg{font-size:12px;color:var(--accent);background:var(--accent-light);border-radius:var(--radius);padding:10px 12px;margin-bottom:12px;line-height:1.6;display:flex;gap:7px;align-items:flex-start}
+.divider{border:none;border-top:1px solid var(--ink-200);margin:18px 0}
+
+/* ══ BUTTONS ══ */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;font-size:13px;font-family:var(--font);font-weight:500;border-radius:var(--radius);border:1px solid var(--ink-200);background:var(--ink-100);color:var(--ink-900);cursor:pointer;transition:background .12s,border-color .12s,box-shadow .12s;white-space:nowrap}
+.btn:hover{background:var(--ink-200)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+.btn-ghost{background:transparent;border-color:transparent;padding:5px 8px}
+.btn-ghost:hover{background:var(--ink-100)}
+.btn-danger{background:var(--red-light);border-color:var(--red-light);color:var(--red)}
+.btn-danger:hover{background:#fad4d1}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-xs{padding:3px 8px;font-size:11px}
+.btn-block{width:100%;justify-content:center;padding:11px}
+
+/* ══ APP SHELL ══ */
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:216px;min-width:216px;background:#0f1117;display:flex;flex-direction:column;overflow:hidden}
+.sb-brand{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:4px;display:flex;align-items:center;gap:10px}
+.sb-brand-icon{width:30px;height:30px;background:var(--accent);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;flex-shrink:0}
+.sb-brand-text{font-size:14px;font-weight:700;color:#fff;letter-spacing:-.02em;line-height:1}
+.sb-brand-sub{font-size:10px;color:rgba(255,255,255,.35);margin-top:2px}
+.sb-section{font-size:10px;color:rgba(255,255,255,.3);padding:14px 16px 4px;text-transform:uppercase;letter-spacing:.1em;font-weight:600}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 16px;font-size:13px;color:rgba(255,255,255,.55);cursor:pointer;border-left:2px solid transparent;transition:all .12s}
+.sb-item:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.05)}
+.sb-item.active{color:#fff;background:rgba(255,255,255,.08);border-left-color:var(--accent)}
+.sb-item i{font-size:16px}
+.sb-item.hidden{display:none}
+.sb-footer{margin-top:auto;padding:12px 16px;border-top:1px solid rgba(255,255,255,.07)}
+.sb-phase{font-size:11px;color:rgba(255,255,255,.35);line-height:1.7}
+.sb-phase strong{color:rgba(255,255,255,.6)}
+.sb-sync{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.sync-pill{font-size:10px;padding:2px 8px;border-radius:99px;display:inline-flex;align-items:center;gap:4px;font-weight:500}
+.sync-ok{background:rgba(26,138,90,.25);color:#2db87a}
+.sync-busy{background:rgba(196,124,10,.25);color:#e8a020}
+.sync-err{background:rgba(192,53,42,.25);color:#e05850}
+.sync-off{background:rgba(255,255,255,.1);color:rgba(255,255,255,.4)}
+.user-chip{display:flex;align-items:center;gap:9px;padding:10px 16px;border-top:1px solid rgba(255,255,255,.07)}
+.uc-info{flex:1;min-width:0}
+.uc-name{font-size:13px;font-weight:500;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.uc-role{font-size:10px;color:rgba(255,255,255,.35)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:var(--ink-100);border-bottom:1px solid var(--ink-200);padding:0 24px;height:54px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:600;color:var(--ink-900);letter-spacing:-.01em}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.topbar-meta{font-size:12px;color:var(--ink-400)}
+.content{flex:1;overflow-y:auto;padding:22px 24px}
+.view{display:none}
+.view.active{display:block}
+
+/* CARDS */
+.card{background:var(--ink-100);border:1px solid var(--ink-200);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:20px}
+.card-pad{padding:16px 18px}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.section-label{font-size:11px;font-weight:600;color:var(--ink-400);text-transform:uppercase;letter-spacing:.08em}
+
+/* METRICS */
+.metrics-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.metric{background:var(--ink-100);border:1px solid var(--ink-200);border-radius:var(--radius-lg);padding:16px}
+.metric-lbl{font-size:11px;font-weight:600;color:var(--ink-400);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+.metric-val{font-size:28px;font-weight:700;color:var(--ink-900);line-height:1;letter-spacing:-.02em}
+.metric-sub{font-size:12px;color:var(--ink-400);margin-top:5px}
+.chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}
+.chip{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600;display:inline-block}
+.chip-green{background:var(--green-light);color:var(--green)}
+.chip-amber{background:var(--amber-light);color:var(--amber)}
+.chip-red{background:var(--red-light);color:var(--red)}
+.chip-blue{background:var(--accent-light);color:var(--accent)}
+.chip-muted{background:var(--ink-200);color:var(--ink-600)}
+
+/* PHASE MILESTONES */
+.milestones{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.milestones:before{content:"";position:absolute;left:7%;right:7%;top:24px;height:3px;background:var(--ink-200);z-index:0}
+.mstone{position:relative;z-index:1;background:var(--ink-100);border:1px solid var(--ink-200);border-radius:var(--radius-lg);padding:14px;min-height:118px}
+.m-dot{width:18px;height:18px;border-radius:50%;background:var(--ink-400);border:4px solid var(--ink-100);margin-bottom:12px}
+.mstone.done .m-dot{background:var(--green)}
+.mstone.active .m-dot{background:var(--accent)}
+.mstone.plan .m-dot{background:var(--ink-300)}
+.m-name{font-size:13px;font-weight:700;color:var(--ink-900);margin-bottom:4px}
+.m-date{font-size:11px;color:var(--ink-400);margin-bottom:8px}
+.m-desc{font-size:12px;color:var(--ink-600);line-height:1.45}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:11px;color:var(--ink-400);font-weight:600;padding:8px 14px;border-bottom:1px solid var(--ink-200);text-align:left;white-space:nowrap;text-transform:uppercase;letter-spacing:.05em}
+.tbl td{padding:10px 14px;border-bottom:1px solid var(--ink-200);font-size:13px;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tbody tr:hover td{background:var(--ink-50)}
+
+/* PROGRESS */
+.pbar{height:5px;background:var(--ink-200);border-radius:3px;overflow:hidden}
+.pfill{height:5px;border-radius:3px;transition:width .3s}
+.c-blue{background:var(--accent)}.c-teal{background:var(--teal)}.c-amber{background:var(--amber)}
+.c-purple{background:var(--purple)}.c-coral{background:var(--coral)}.c-green{background:var(--green)}.c-gray{background:var(--ink-400)}
+
+/* STATUS */
+.spill{font-size:11px;padding:2px 9px;border-radius:99px;display:inline-block;white-space:nowrap;font-weight:600}
+.sp-done{background:var(--green-light);color:var(--green)}
+.sp-prog{background:var(--accent-light);color:var(--accent)}
+.sp-hold{background:var(--amber-light);color:var(--amber)}
+.sp-plan{background:var(--ink-200);color:var(--ink-600)}
+
+/* AVATAR */
+.av{border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+
+/* ACTIVITY */
+.act-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--ink-200)}
+.act-item:last-child{border-bottom:none}
+.act-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* KANBAN */
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:start}
+.kol{background:var(--ink-100);border:1px solid var(--ink-200);border-radius:var(--radius-lg);overflow:hidden}
+.kol-head{font-size:12px;font-weight:600;color:var(--ink-700);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--ink-200);background:var(--ink-50);text-transform:uppercase;letter-spacing:.05em}
+.kol-cnt{font-size:11px;background:var(--ink-200);color:var(--ink-600);padding:1px 8px;border-radius:99px}
+.kol-body{padding:8px;min-height:60px}
+.task-card{background:var(--ink-50);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;cursor:pointer;border:1px solid var(--ink-200);transition:border-color .1s,box-shadow .1s}
+.task-card:last-child{margin-bottom:0}
+.task-card:hover{border-color:var(--ink-300);box-shadow:var(--shadow)}
+.t-title{font-size:13px;color:var(--ink-900);line-height:1.4;margin-bottom:7px}
+.t-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dtag{font-size:10px;padding:2px 7px;border-radius:4px;font-weight:600}
+.dtag-NET{background:var(--accent-light);color:var(--accent)}
+.dtag-SOC{background:var(--purple-light);color:var(--purple)}
+.dtag-EDR{background:var(--green-light);color:var(--green)}
+.dtag-IAM{background:var(--amber-light);color:var(--amber)}
+.dtag-VM{background:var(--red-light);color:var(--red)}
+.dtag-LOG{background:var(--teal-light);color:var(--teal)}
+.pri-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.pd-h{background:var(--red)}.pd-m{background:var(--amber)}.pd-l{background:var(--green)}
+.due-lbl{font-size:10px;color:var(--ink-400);display:flex;align-items:center;gap:3px}
+.filter-bar{display:flex;gap:6px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.fb{padding:4px 12px;font-size:12px;border-radius:var(--radius);border:1px solid var(--ink-200);background:var(--ink-100);color:var(--ink-600);cursor:pointer;transition:all .1s;font-weight:500}
+.fb:hover{background:var(--ink-200)}
+.fb.active{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+
+/* GANTT */
+.gantt-wrap{overflow-x:auto}
+.gt{width:100%;min-width:780px;border-collapse:collapse}
+.gt th{font-size:11px;color:var(--ink-400);font-weight:600;padding:8px 12px;border-bottom:1px solid var(--ink-200);text-align:left;white-space:nowrap;text-transform:uppercase;letter-spacing:.05em}
+.gt td{padding:8px 12px;border-bottom:1px solid var(--ink-200);font-size:13px;vertical-align:middle}
+.gt tr:last-child td{border-bottom:none}
+.gbar-bg{background:var(--ink-200);border-radius:4px;height:16px;position:relative;overflow:hidden;min-width:300px}
+.gbar{height:16px;border-radius:4px;position:absolute;top:0;opacity:.85}
+.gdates{display:flex;justify-content:space-between;font-size:10px;color:var(--ink-400);min-width:300px}
+
+/* ASSETS */
+.asset-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.asset-card{background:var(--ink-100);border:1px solid var(--ink-200);border-radius:var(--radius-lg);padding:18px}
+.ai-wrap{width:40px;height:40px;border-radius:var(--radius);background:var(--ink-50);border:1px solid var(--ink-200);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.ai-wrap i{font-size:20px}
+.a-name{font-size:14px;font-weight:600;color:var(--ink-900);margin-bottom:4px;letter-spacing:-.01em}
+.a-detail{font-size:12px;color:var(--ink-600);line-height:1.7;margin-bottom:12px}
+.a-prog-lbl{font-size:11px;color:var(--ink-400);display:flex;justify-content:space-between;margin-top:5px}
+
+/* VENDORS */
+.vendors-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.vendor-card{background:var(--ink-100);border:1px solid var(--ink-200);border-radius:var(--radius-lg);padding:18px}
+.vi-wrap{width:40px;height:40px;border-radius:var(--radius);background:var(--ink-50);border:1px solid var(--ink-200);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.vi-wrap i{font-size:20px}
+.v-name{font-size:14px;font-weight:600;color:var(--ink-900);margin-bottom:4px;letter-spacing:-.01em}
+.v-detail{font-size:12px;color:var(--ink-600);line-height:1.7;margin-bottom:12px}
+.v-license-lbl{font-size:11px;color:var(--ink-400);display:flex;justify-content:space-between;margin-top:5px}
+.license-expired{color:var(--red)}.license-warning{color:var(--amber)}.license-active{color:var(--green)}
+
+/* RISK */
+.rl{font-size:11px;padding:2px 9px;border-radius:99px;display:inline-block;font-weight:600;white-space:nowrap}
+.rl-h{background:var(--red-light);color:var(--red)}
+.rl-m{background:var(--amber-light);color:var(--amber)}
+.rl-l{background:var(--green-light);color:var(--green)}
+.op{font-size:11px;padding:2px 8px;border:1px solid var(--ink-200);border-radius:99px;color:var(--ink-600)}
+
+/* MEMBERS */
+.mem-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
+.mem-card{background:var(--ink-100);border:1px solid var(--ink-200);border-radius:var(--radius-lg);padding:18px}
+.mem-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.mem-info{flex:1;min-width:0}
+.mem-name{font-size:14px;font-weight:600;color:var(--ink-900);letter-spacing:-.01em}
+.mem-email{font-size:11px;color:var(--ink-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.role-badge{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600}
+.rb-admin{background:var(--purple-light);color:var(--purple)}
+.rb-lead{background:var(--accent-light);color:var(--accent)}
+.rb-member{background:var(--ink-200);color:var(--ink-600)}
+.rb-viewer{background:var(--green-light);color:var(--green)}
+.stat-row{display:flex;gap:16px;margin-bottom:12px}
+.stat{display:flex;flex-direction:column;align-items:center}
+.stat-n{font-size:17px;font-weight:700;color:var(--ink-900);letter-spacing:-.01em}
+.stat-l{font-size:10px;color:var(--ink-400);text-transform:uppercase;font-weight:600;letter-spacing:.04em}
+.role-sel{font-size:12px;padding:4px 8px;border-radius:var(--radius);border:1px solid var(--ink-200);background:var(--ink-50);color:var(--ink-900);cursor:pointer;font-family:var(--font)}
+.mem-actions{display:flex;gap:6px;margin-top:10px}
+.mem-actions .role-sel{min-width:92px}
+
+/* SETTINGS */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:900px){.settings-grid{grid-template-columns:1fr}}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--ink-100);border-radius:var(--radius-xl);border:1px solid var(--ink-200);width:460px;max-width:95vw;padding:26px;box-shadow:var(--shadow-lg);max-height:90vh;overflow-y:auto}
+.modal-title{font-size:15px;font-weight:700;color:var(--ink-900);margin-bottom:18px;display:flex;align-items:center;gap:9px;letter-spacing:-.01em}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--ink-800);color:var(--ink-100);font-size:13px;padding:11px 18px;border-radius:var(--radius-lg);z-index:400;opacity:0;transform:translateY(10px);transition:all .2s;pointer-events:none;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-lg);max-width:340px}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* LOADING OVERLAY */
+.loading-overlay{position:fixed;inset:0;z-index:500;background:var(--ink-50);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.loading-overlay.hidden{display:none}
+.spinner{width:32px;height:32px;border:3px solid var(--ink-200);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-txt{font-size:13px;color:var(--ink-400)}
+
+/* SETUP SCRIPT BOX */
+.script-box{background:var(--ink-50);border:1px solid var(--ink-200);border-radius:var(--radius);padding:12px;font-family:monospace;font-size:11px;color:var(--ink-700);overflow-x:auto;white-space:pre;max-height:140px;overflow-y:auto;line-height:1.6;margin-top:6px}
+.copy-btn{font-size:11px;padding:3px 9px;margin-top:6px}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--ink-200);border-radius:3px}
+
+/* COMMENTS */
+.comment-list{max-height:240px;overflow-y:auto;margin-bottom:12px;border:1px solid var(--ink-200);border-radius:var(--radius);background:var(--ink-50)}
+.comment-item{padding:10px 12px;border-bottom:1px solid var(--ink-200)}
+.comment-item:last-child{border-bottom:none}
+.comment-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+.comment-author{font-size:12px;font-weight:600;color:var(--ink-900)}
+.comment-time{font-size:10px;color:var(--ink-400)}
+.comment-text{font-size:12px;color:var(--ink-700);line-height:1.5;white-space:pre-wrap}
+.comment-empty{padding:18px;text-align:center;font-size:12px;color:var(--ink-400)}
+.task-detail-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.cmt-count{font-size:10px;color:var(--ink-400);display:flex;align-items:center;gap:3px}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading"><div class="spinner"></div><div class="loading-txt" id="loading-txt">Loading…</div></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><i class="ti" id="ti" style="font-size:15px"></i><span id="tm"></span></div>
+
+<!-- ══ SETUP SCREEN ══ -->
+<div class="screen hidden" id="setup-screen">
+  <div class="screen-wrap">
+    <div class="screen-card">
+      <div class="brand"><div class="brand-icon"><i class="ti ti-shield-lock"></i></div><div><div class="brand-name">MSSP Deploy</div></div></div>
+      <div class="screen-sub">Connect to Google Sheets as your free cloud database — one Apps Script deployment hosts both the data and this page, so it can be embedded directly in Google Sites.</div>
+
+      <div class="step-row"><div class="step-num">1</div><div class="step-text">Go to <a href="https://sheets.google.com" target="_blank">sheets.google.com</a> and create a new spreadsheet. Name it <strong>MSSP_PM_DB</strong>.</div></div>
+      <div class="step-row"><div class="step-num">2</div><div class="step-text">In the spreadsheet, go to <strong>Extensions → Apps Script</strong>. Delete the default code in <code>Code.gs</code> and paste the Apps Script below (click <strong>Show Apps Script code</strong>).</div></div>
+      <div class="step-row"><div class="step-num">3</div><div class="step-text">In the Apps Script editor, click <strong>File → New → HTML file</strong>, name it exactly <code>Index</code> (no extension), and paste the entire contents of this <strong>same mssp_app.html file</strong> into it.</div></div>
+      <div class="step-row"><div class="step-num">4</div><div class="step-text">Click <strong>Deploy → New deployment → Web app</strong>. Set <em>Execute as: Me</em> and <em>Who has access: Anyone</em>. Copy the Web App URL ending in <code>/exec</code> — paste it below to test the connection.</div></div>
+      <div class="step-row"><div class="step-num">5</div><div class="step-text">To embed in Google Sites: open your Site → <strong>Insert → Embed → By URL</strong> → paste the same <code>/exec</code> URL. That's it — one URL serves the whole app and stays connected to this Sheet.</div></div>
+
+      <details style="margin-bottom:16px">
+        <summary style="font-size:12px;font-weight:600;color:var(--accent);cursor:pointer;padding:6px 0">Show Apps Script code to paste (Code.gs) ▾</summary>
+        <div class="script-box" id="script-preview"></div>
+        <button class="btn btn-sm copy-btn" onclick="copyScript()"><i class="ti ti-copy" style="font-size:12px"></i> Copy script</button>
+      </details>
+
+      <div class="fg">
+        <label>Google Apps Script Web App URL</label>
+        <input type="url" id="gsheet-url" placeholder="https://script.google.com/macros/s/.../exec">
+        <div class="fg-hint">Paste the deployment URL from Apps Script → Deploy</div>
+      </div>
+
+      <div class="err-msg" id="setup-err" style="display:flex"><i class="ti ti-alert-circle" style="font-size:14px"></i><span id="setup-err-txt">Could not connect.</span></div>
+
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary btn-block" onclick="setupConnect()" id="setup-btn" style="flex:1"><i class="ti ti-plug" style="font-size:14px"></i> Connect to Google Sheets</button>
+        <button class="btn" onclick="setupSkip()" title="Use local storage only"><i class="ti ti-device-floppy" style="font-size:13px"></i> Local only</button>
+      </div>
+      <div style="font-size:11px;color:var(--ink-400);margin-top:12px;text-align:center">Your Web App URL is saved only in this browser. No demo data is ever written to your Sheet.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BOOTSTRAP ADMIN SCREEN (shown once, only if connected Sheet has zero members) ══ -->
+<div class="screen hidden" id="bootstrap-screen">
+  <div class="screen-wrap">
+    <div class="screen-card">
+      <div class="brand"><div class="brand-icon"><i class="ti ti-user-shield"></i></div><div><div class="brand-name">Create your Admin account</div></div></div>
+      <div class="screen-sub">Your Google Sheet is empty — set up the first Admin account to sign in with. You can invite the rest of the team afterward.</div>
+
+      <div class="err-msg" id="bootstrap-err" style="display:flex"><i class="ti ti-alert-circle" style="font-size:14px"></i><span id="bootstrap-err-txt">Could not connect.</span></div>
+
+      <div class="fg"><label>Your name</label><input type="text" id="bs-name" placeholder="e.g. Raymond Cruz"></div>
+      <div class="fg"><label>Email</label><input type="email" id="bs-email" placeholder="you@bowmantech.ph"></div>
+      <div class="fg"><label>Password</label><input type="password" id="bs-pass" placeholder="Choose a password"></div>
+
+      <button class="btn btn-primary btn-block" onclick="completeBootstrap()" id="bootstrap-btn"><i class="ti ti-check" style="font-size:14px"></i> Create Admin account</button>
+      <div style="font-size:11px;color:var(--ink-400);margin-top:12px;text-align:center">This is saved to your Google Sheet's Members tab as a real record — not a demo account.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LOGIN SCREEN ══ -->
+<div class="screen hidden" id="login-screen">
+  <div class="screen-wrap" style="max-width:380px">
+    <div class="screen-card">
+      <div class="brand"><div class="brand-icon"><i class="ti ti-shield-lock"></i></div><div><div class="brand-name">MSSP Deploy</div><div style="font-size:11px;color:var(--ink-400);margin-top:2px">Security Services PM</div></div></div>
+      <div style="height:24px"></div>
+      <div class="err-msg" id="login-err" style="display:flex"><i class="ti ti-alert-circle" style="font-size:14px"></i><span>Incorrect email or password.</span></div>
+      <div class="fg"><label>Email</label><input type="email" id="le" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="fg"><label>Password</label><input type="password" id="lp" placeholder="Password"></div>
+      <button class="btn btn-primary btn-block" onclick="doLogin()"><i class="ti ti-login" style="font-size:14px"></i> Sign in</button>
+      <div style="text-align:center;margin-top:14px"><button class="btn btn-sm btn-ghost" onclick="resetSetup()" style="font-size:11px"><i class="ti ti-settings" style="font-size:12px"></i> Change database</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div class="app hidden" id="app">
+  <div class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-brand-icon"><i class="ti ti-shield-lock"></i></div>
+      <div><div class="sb-brand-text">MSSP Deploy</div><div class="sb-brand-sub" id="sb-active-project">Security Services PM</div></div>
+    </div>
+    <div class="sb-section">Workspace</div>
+    <div class="sb-item active" onclick="switchView('dashboard',this)"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
+    <div class="sb-item" onclick="switchView('projects',this)"><i class="ti ti-briefcase"></i> Projects</div>
+    <div class="sb-item" onclick="switchView('knowledge',this)"><i class="ti ti-book"></i> Knowledge Base</div>
+    <div class="sb-item" onclick="switchView('kanban',this)"><i class="ti ti-layout-kanban"></i> Task Board</div>
+    <div class="sb-item" onclick="switchView('gantt',this)"><i class="ti ti-chart-gantt"></i> Timeline</div>
+    <div class="sb-section">Operations</div>
+    <div class="sb-item" onclick="switchView('assets',this)"><i class="ti ti-server"></i> Asset Registry</div>
+    <div class="sb-item" onclick="switchView('risks',this)"><i class="ti ti-alert-triangle"></i> Risk Register</div>
+    <div class="sb-section">Team</div>
+    <div class="sb-item" onclick="switchView('members',this)"><i class="ti ti-users"></i> Members</div>
+    <div class="sb-item" onclick="switchView('vendors',this)"><i class="ti ti-receipt"></i> Vendors</div>
+    <div class="sb-item hidden" id="sb-settings" onclick="switchView('settings',this)"><i class="ti ti-settings"></i> Settings</div>
+    <div class="sb-footer">
+      <div class="sb-sync">
+        <span class="sync-pill sync-ok" id="sync-pill"><i class="ti ti-cloud-check" style="font-size:10px"></i> Synced</span>
+        <button class="btn btn-ghost" style="padding:3px 6px;color:rgba(255,255,255,.4)" onclick="forceSave()" title="Force sync"><i class="ti ti-refresh" style="font-size:13px"></i></button>
+      </div>
+      <div class="sb-phase" id="sb-phase">No active project</div>
+    </div>
+    <div class="user-chip">
+      <div class="av" id="sb-av" style="width:32px;height:32px;font-size:11px">—</div>
+      <div class="uc-info"><div class="uc-name" id="sb-name">—</div><div class="uc-role" id="sb-role">—</div></div>
+      <button class="btn btn-ghost" style="color:rgba(255,255,255,.35);padding:4px" onclick="doLogout()" title="Sign out"><i class="ti ti-logout" style="font-size:15px"></i></button>
+    </div>
+  </div>
+
+  <div class="main">
+<div class="topbar">
+       <span class="topbar-title" id="page-title">Deployment Dashboard</span>
+       <div class="topbar-right">
+         <select id="db-project-select" onchange="switchToProject(this.value)" style="margin-right:8px;padding:4px 8px;border:1px solid var(--ink-200);border-radius:var(--radius);background:var(--ink-100);color:var(--ink-900);font-size:13px"></select>
+         <span class="topbar-meta" id="topbar-db-label"></span>
+         <button class="btn btn-sm" id="btn-invite" onclick="openModal('invite')" style="display:none"><i class="ti ti-user-plus" style="font-size:13px"></i> Invite</button>
+         <button class="btn btn-primary btn-sm" onclick="openModal('task')"><i class="ti ti-plus" style="font-size:13px"></i> New Task</button>
+       </div>
+     </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="view active" id="view-dashboard">
+        <div class="metrics-row">
+          <div class="metric"><div class="metric-lbl">Overall Progress</div><div class="metric-val" id="m-pct">—</div><div class="pbar" style="margin-top:10px"><div class="pfill c-blue" id="m-bar" style="width:0"></div></div><div class="metric-sub" id="m-sub">—</div></div>
+          <div class="metric"><div class="metric-lbl">Active Deployments</div><div class="metric-val" id="m-deploys">—</div><div class="chips" id="m-deploys-chips"></div></div>
+          <div class="metric"><div class="metric-lbl">Open Risks</div><div class="metric-val" id="m-risks">9</div><div class="chips" id="m-risks-chips"><span class="chip chip-red">3 critical</span><span class="chip chip-amber">6 medium</span></div></div>
+          <div class="metric"><div class="metric-lbl">Next Deadline</div><div class="metric-val" id="m-deadline">—</div><div class="chips" id="m-deadline-chips"></div></div>
+        </div>
+        <div class="section-head"><span class="section-label">Phase Milestones</span><span class="chip chip-blue" id="phase-milestone-summary">Phase 2 active</span></div>
+        <div class="milestones" id="phase-milestones"></div>
+        <div class="section-head"><span class="section-label">Workstream Status</span></div>
+        <div class="card"><table class="tbl"><thead><tr><th>Workstream</th><th>Owner</th><th style="min-width:160px">Progress</th><th>Status</th><th>Due</th></tr></thead><tbody id="ws-body"></tbody></table></div>
+        <div class="section-head"><span class="section-label">Recent Activity</span></div>
+        <div class="card card-pad" id="act-feed"></div>
+      </div>
+
+      <!-- PROJECTS -->
+      <div class="view" id="view-projects">
+        <div class="section-head"><span class="section-label">Projects</span><button class="btn btn-primary btn-sm" onclick="openProjectModal()"><i class="ti ti-plus" style="font-size:12px"></i> New Project</button></div>
+        <div class="settings-grid" style="margin-bottom:20px">
+          <div class="card card-pad">
+            <div class="section-head"><span class="section-label">Project List</span><span class="chip chip-blue" id="project-count">0 projects</span></div>
+            <div id="project-list" style="display:grid;gap:10px"></div>
+          </div>
+          <div class="card card-pad">
+            <div class="section-head"><span class="section-label">Selected Project</span></div>
+            <div id="project-detail"></div>
+          </div>
+        </div>
+        <div class="card card-pad">
+          <div class="section-head"><span class="section-label">Project Members</span></div>
+          <div class="fg-row" style="margin-bottom:12px">
+            <select id="project-member-select"></select>
+            <button class="btn btn-primary btn-sm" id="add-project-member-btn" onclick="addProjectMember()">Add Member</button>
+          </div>
+<table class="tbl"><thead><tr><th>Member</th><th>Role</th><th>Domain</th><th></th></tr></thead><tbody id="project-members-body"></tbody></table>
+           <div class="divider"></div>
+           <div class="section-head"><span class="section-label">Phase 1 Attachment</span><span class="chip chip-muted" id="phase1-status">Not attached</span></div>
+           <div class="fg-row" style="margin-bottom:12px">
+             <input type="file" id="project-phase1-file" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg">
+             <button class="btn btn-primary btn-sm" onclick="uploadPhase1File()"><i class="ti ti-paperclip" style="font-size:12px"></i> Upload</button>
+           </div>
+           <div id="phase1-preview"></div>
+           <div class="divider"></div>
+           <div class="section-head"><span class="section-label">Project Invitations</span></div>
+          <div class="fg-row" style="margin-bottom:12px">
+            <input type="email" id="project-invite-email" placeholder="member@example.com">
+            <select id="project-invite-role"></select>
+            <select id="project-invite-domain"></select>
+            <button class="btn btn-primary btn-sm" onclick="inviteProjectMember()">Invite</button>
+          </div>
+          <table class="tbl"><thead><tr><th>Email</th><th>Role</th><th>Domain</th><th>Date</th><th></th></tr></thead><tbody id="project-invites-body"></tbody></table>
+        </div>
+        <div class="card card-pad" style="margin-top:20px">
+          <div class="section-head"><span class="section-label">Project Tasks</span><button class="btn btn-primary btn-sm" id="project-new-task-btn" onclick="openTaskForProject()"><i class="ti ti-plus" style="font-size:12px"></i> New Task</button></div>
+          <table class="tbl"><thead><tr><th>Task</th><th>Owner</th><th>Stage</th><th>Due</th><th></th></tr></thead><tbody id="project-tasks-body"></tbody></table>
+        </div>
+      </div>
+
+      <!-- KNOWLEDGE BASE -->
+      <div class="view" id="view-knowledge">
+        <div class="section-head"><span class="section-label">Knowledge Base</span><span class="chip chip-blue" id="kb-count">0 articles</span></div>
+<div class="fg">
+           <input type="search" id="kb-search" placeholder="Search functions, guides, or keywords..." oninput="renderKnowledgeBase()">
+         </div>
+         <div class="settings-grid" id="kb-grid"></div>
+      </div>
+
+      <!-- KANBAN -->
+      <div class="view" id="view-kanban">
+        <div class="filter-bar">
+          <span style="font-size:12px;color:var(--ink-400);font-weight:600">Filter:</span>
+          <button class="fb active" id="kf-all" onclick="filterK('all',this)">All</button>
+          <button class="fb" id="kf-NET" onclick="filterK('NET',this)">Network</button>
+          <button class="fb" id="kf-SOC" onclick="filterK('SOC',this)">SOC</button>
+          <button class="fb" id="kf-EDR" onclick="filterK('EDR',this)">EDR</button>
+          <button class="fb" id="kf-IAM" onclick="filterK('IAM',this)">IAM</button>
+          <button class="fb" id="kf-VM"  onclick="filterK('VM',this)">Vuln Mgmt</button>
+          <button class="fb" id="kf-LOG" onclick="filterK('LOG',this)">Log Mgmt</button>
+        </div>
+        <div class="kanban" id="kanban-board"></div>
+      </div>
+
+      <!-- GANTT -->
+      <div class="view" id="view-gantt">
+        <div class="card"><div class="gantt-wrap" style="padding:16px">
+          <table class="gt"><thead><tr><th style="min-width:180px">Workstream</th><th>Owner</th><th>Status</th>
+            <th><div class="gdates"><span>May 15</span><span>Jun 1</span><span>Jun 15</span><span>Jul 1</span><span>Jul 15</span></div></th>
+          </tr></thead><tbody id="gantt-body"></tbody></table>
+        </div></div>
+      </div>
+
+      <!-- ASSETS -->
+      <div class="view" id="view-assets">
+        <div class="section-head"><span class="section-label">Deployed Security Tools</span><span class="chip chip-blue" id="asset-count">6 assets</span><button class="btn btn-primary btn-sm" onclick="openAssetModal()"><i class="ti ti-plus" style="font-size:12px"></i> New Asset</button></div>
+        <div class="asset-grid" id="asset-grid"></div>
+      </div>
+
+      <!-- RISKS -->
+      <div class="view" id="view-risks">
+        <div class="section-head"><span class="section-label">Risk Register</span><span class="chip chip-red" id="risk-count">3 critical</span><button class="btn btn-primary btn-sm" onclick="openRiskModal()"><i class="ti ti-plus" style="font-size:12px"></i> New Risk</button></div>
+        <div class="card"><table class="tbl"><thead><tr><th style="min-width:200px">Risk</th><th>Category</th><th>Likelihood</th><th>Impact</th><th>Level</th><th>Owner</th><th style="min-width:200px">Mitigation</th><th></th></tr></thead><tbody id="risk-body"></tbody></table></div>
+      </div>
+
+      <!-- VENDORS -->
+      <div class="view" id="view-vendors">
+        <div class="section-head"><span class="section-label">Vendor Management</span><span class="chip chip-blue" id="vendor-count">0 vendors</span><button class="btn btn-primary btn-sm" onclick="openVendorModal()"><i class="ti ti-plus" style="font-size:12px"></i> New Vendor</button></div>
+        <div class="vendors-grid" id="vendors-grid"></div>
+      </div>
+
+      <!-- MEMBERS -->
+      <div class="view" id="view-members">
+        <div class="section-head"><span class="section-label">Team Members</span><button class="btn btn-primary btn-sm" id="mem-invite-btn" onclick="openModal('invite')"><i class="ti ti-user-plus" style="font-size:12px"></i> Invite</button></div>
+        <div class="mem-grid" id="mem-grid"></div>
+        <div class="section-head"><span class="section-label">Pending Invitations</span></div>
+        <div class="card"><table class="tbl"><thead><tr><th>Email</th><th>Role</th><th>Invited by</th><th>Date</th><th>Status</th><th></th></tr></thead><tbody id="inv-body"></tbody></table></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="view" id="view-settings">
+        <div class="section-head"><span class="section-label">Admin Settings</span><span class="chip chip-purple">Role & Domain Management</span></div>
+        <div class="card card-pad" style="margin-bottom:20px">
+          <div style="font-size:13px;color:var(--ink-700);line-height:1.6;margin-bottom:12px">Manage member roles, domains, and the role/domain options available when inviting or editing members. Changes save automatically to local storage or Google Sheets.</div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('invite')"><i class="ti ti-user-plus" style="font-size:12px"></i> Invite Member</button>
+        </div>
+        <div class="card" style="margin-bottom:20px"><table class="tbl"><thead><tr><th>Member</th><th>Email</th><th>Role</th><th>Domain</th><th>Open Tasks</th><th>Done Tasks</th></tr></thead><tbody id="settings-members-body"></tbody></table></div>
+        <div class="settings-grid">
+          <div class="card card-pad">
+            <div class="section-head"><span class="section-label">Role Management</span></div>
+            <div class="fg-row" style="margin-bottom:12px">
+              <input type="text" id="new-role" placeholder="New role name">
+              <button class="btn btn-primary btn-sm" onclick="addRole()">Add Role</button>
+            </div>
+            <table class="tbl"><thead><tr><th>Role</th><th>Members</th><th></th></tr></thead><tbody id="settings-roles-body"></tbody></table>
+          </div>
+          <div class="card card-pad">
+            <div class="section-head"><span class="section-label">Domain Management</span></div>
+            <div class="fg-row" style="margin-bottom:12px">
+              <input type="text" id="new-domain" placeholder="New domain">
+              <button class="btn btn-primary btn-sm" onclick="addDomain()">Add Domain</button>
+            </div>
+            <table class="tbl"><thead><tr><th>Domain</th><th>Members</th><th></th></tr></thead><tbody id="settings-domains-body"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══ TASK MODAL ══ -->
+<div class="modal-bg" id="modal-task">
+  <div class="modal">
+    <div class="modal-title"><i class="ti ti-clipboard-plus" style="font-size:16px;color:var(--accent)"></i> New Task</div>
+    <div class="fg"><label>Task title</label><input type="text" id="nt-title" placeholder="e.g. Configure SIEM alert rules"></div>
+    <div class="fg-row">
+      <div class="fg"><label>Domain</label><select id="nt-tag"><option value="NET">Network</option><option value="SOC">SOC</option><option value="EDR">EDR</option><option value="IAM">IAM</option><option value="VM">Vuln Mgmt</option><option value="LOG">Log Mgmt</option></select></div>
+      <div class="fg"><label>Priority</label><select id="nt-pri"><option value="h">High</option><option value="m" selected>Medium</option><option value="l">Low</option></select></div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Project</label><select id="nt-project"></select></div>
+      <div class="fg"><label>Due date</label><input type="date" id="nt-due"></div>
+    </div>
+    <div class="fg"><label>Stage</label><select id="nt-col"><option value="backlog">Backlog</option><option value="inprogress">In Progress</option><option value="review">Review</option><option value="done">Done</option></select></div>
+    <div class="fg"><label>Assign to</label><select id="nt-owner"></select></div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal('task')">Cancel</button><button class="btn btn-primary" onclick="addTask()"><i class="ti ti-check" style="font-size:13px"></i> Add Task</button></div>
+  </div>
+</div>
+
+<!-- ══ PROJECT MODAL ══ -->
+ <div class="modal-bg" id="modal-project">
+   <div class="modal">
+     <div class="modal-title" id="project-modal-title"><i class="ti ti-briefcase" style="font-size:16px;color:var(--accent)"></i> New Project</div>
+     <input type="hidden" id="project-id">
+     <div class="fg"><label>Project name</label><input type="text" id="project-name" placeholder="e.g. Client Onboarding"></div>
+     <div class="fg"><label>Description</label><textarea id="project-description" placeholder="Project scope and objectives"></textarea></div>
+     <div class="fg-row">
+       <div class="fg"><label>Current Phase</label><select id="project-phase">
+         <option value="1">Phase 1: Kickoff & Scope</option>
+         <option value="2" selected>Phase 2: Deployment & Integration</option>
+         <option value="3">Phase 3: Testing & UAT</option>
+         <option value="4">Phase 4: Go-Live & Handover</option>
+       </select></div>
+       <div class="fg"><label>Owner</label><select id="project-owner"></select></div>
+     </div>
+     <div class="modal-actions"><button class="btn" onclick="closeModal('project')">Cancel</button><button class="btn btn-primary" onclick="saveProject()"><i class="ti ti-check" style="font-size:13px"></i> Save Project</button></div>
+   </div>
+ </div>
+
+<!-- ══ INVITE MODAL ══ -->
+<div class="modal-bg" id="modal-invite">
+  <div class="modal">
+    <div class="modal-title"><i class="ti ti-user-plus" style="font-size:16px;color:var(--accent)"></i> Invite Team Member</div>
+    <div class="fg"><label>Full name</label><input type="text" id="in-name" placeholder="Maria Santos"></div>
+    <div class="fg"><label>Email</label><input type="email" id="in-email" placeholder="maria@example.com"></div>
+    <div class="fg-row">
+      <div class="fg"><label>Role</label><select id="in-role"><option value="admin">Admin</option><option value="lead" selected>Lead</option><option value="member">Member</option><option value="viewer">Viewer</option></select></div>
+      <div class="fg"><label>Domain</label><select id="in-domain"><option value="NET">Network</option><option value="SOC">SOC</option><option value="EDR">EDR</option><option value="IAM">IAM</option><option value="VM">Vuln Mgmt</option><option value="LOG">Log Mgmt</option></select></div>
+    </div>
+    <div class="fg"><label>Temporary Password</label><input type="text" id="in-pass" placeholder="Welcome2026!"></div>
+    <hr class="divider">
+    <div class="info-msg"><i class="ti ti-info-circle" style="font-size:14px;flex-shrink:0"></i><span>Member will be saved to Google Sheets and can log in immediately with this password.</span></div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal('invite')">Cancel</button><button class="btn btn-primary" onclick="sendInvite()"><i class="ti ti-send" style="font-size:13px"></i> Add Member</button></div>
+  </div>
+</div>
+
+<!-- ══ ASSET MODAL ══ -->
+<div class="modal-bg" id="modal-asset">
+  <div class="modal">
+    <div class="modal-title" id="asset-modal-title"><i class="ti ti-server" style="font-size:16px;color:var(--accent)"></i> New Asset</div>
+    <input type="hidden" id="asset-id">
+    <div class="fg"><label>Asset name</label><input type="text" id="asset-name" placeholder="e.g. SIEM Platform"></div>
+    <div class="fg-row">
+      <div class="fg"><label>Icon</label>
+        <select id="asset-icon">
+          <option value="ti-shield">Shield</option>
+          <option value="ti-server-2">Server</option>
+          <option value="ti-device-laptop">Endpoint</option>
+          <option value="ti-key">Key / IAM</option>
+          <option value="ti-scan">Scanner</option>
+          <option value="ti-database">Database</option>
+          <option value="ti-cloud">Cloud</option>
+          <option value="ti-router">Network</option>
+          <option value="ti-lock">Security</option>
+        </select>
+      </div>
+      <div class="fg"><label>Progress</label><input type="number" id="asset-pct" min="0" max="100" value="70"></div>
+    </div>
+    <div class="fg"><label>Details</label><textarea id="asset-detail" placeholder="Vendor, version, scope, notes"></textarea></div>
+    <div class="fg-row">
+      <div class="fg"><label>Status label</label><input type="text" id="asset-label" placeholder="e.g. Integration ongoing"></div>
+      <div class="fg"><label>Color</label>
+        <select id="asset-col">
+          <option value="c-blue">Blue</option>
+          <option value="c-purple">Purple</option>
+          <option value="c-teal">Teal</option>
+          <option value="c-amber">Amber</option>
+          <option value="c-coral">Coral</option>
+          <option value="c-green">Green</option>
+          <option value="c-gray">Gray</option>
+        </select>
+      </div>
+    </div>
+<div class="modal-actions"><button class="btn" onclick="closeModal('asset')">Cancel</button><button class="btn btn-primary" onclick="saveAsset()"><i class="ti ti-check" style="font-size:13px"></i> Save Asset</button></div>
+   </div>
+ </div>
+
+ <!-- ══ VENDOR MODAL ══ -->
+ <div class="modal-bg" id="modal-vendor">
+   <div class="modal">
+     <div class="modal-title" id="vendor-modal-title"><i class="ti ti-receipt" style="font-size:16px;color:var(--accent)"></i> New Vendor</div>
+     <input type="hidden" id="vendor-id">
+     <div class="fg"><label>Vendor name</label><input type="text" id="vendor-name" placeholder="e.g. CrowdStrike"></div>
+     <div class="fg"><label>Contact person</label><input type="text" id="vendor-contact" placeholder="e.g. John Smith"></div>
+     <div class="fg"><label>Contact email</label><input type="email" id="vendor-email" placeholder="john@vendor.com"></div>
+     <div class="fg-row">
+       <div class="fg"><label>License start date</label><input type="date" id="vendor-license-start"></div>
+       <div class="fg"><label>License expiry date</label><input type="date" id="vendor-license-end"></div>
+     </div>
+     <div class="fg"><label>Support level</label><select id="vendor-support">
+       <option value="Standard">Standard</option>
+       <option value="Premium">Premium</option>
+       <option value="Enterprise">Enterprise</option>
+     </select></div>
+     <div class="fg"><label>Notes</label><textarea id="vendor-notes" placeholder="License terms, renewal reminders, etc."></textarea></div>
+     <div class="modal-actions"><button class="btn" onclick="closeModal('vendor')">Cancel</button><button class="btn btn-primary" onclick="saveVendor()"><i class="ti ti-check" style="font-size:13px"></i> Save Vendor</button></div>
+   </div>
+ </div>
+
+ <!-- ══ RISK MODAL ══ -->
+ <div class="modal-bg" id="modal-risk">
+   <div class="modal">
+     <div class="modal-title" id="risk-modal-title"><i class="ti ti-alert-triangle" style="font-size:16px;color:var(--accent)"></i> New Risk</div>
+     <input type="hidden" id="risk-id">
+     <div class="fg"><label>Risk description</label><textarea id="risk-desc" placeholder="e.g. AD connector failure blocking PAM vault go-live"></textarea></div>
+     <div class="fg-row">
+       <div class="fg"><label>Category</label><input type="text" id="risk-cat" placeholder="e.g. Integration"></div>
+       <div class="fg"><label>Owner</label><select id="risk-owner"></select></div>
+     </div>
+     <div class="fg-row">
+       <div class="fg"><label>Likelihood</label><select id="risk-like"><option value="Low">Low</option><option value="Medium" selected>Medium</option><option value="High">High</option></select></div>
+       <div class="fg"><label>Impact</label><select id="risk-impact"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High" selected>High</option></select></div>
+     </div>
+     <div class="fg"><label>Risk level</label><select id="risk-level">
+       <option value="rl-h">High</option>
+       <option value="rl-m" selected>Medium</option>
+       <option value="rl-l">Low</option>
+     </select></div>
+     <div class="fg"><label>Mitigation</label><textarea id="risk-mit" placeholder="Mitigation plan / next steps"></textarea></div>
+     <div class="modal-actions"><button class="btn" onclick="closeModal('risk')">Cancel</button><button class="btn btn-primary" onclick="saveRisk()"><i class="ti ti-check" style="font-size:13px"></i> Save Risk</button></div>
+   </div>
+ </div>
+
+ <!-- ══ TASK DETAIL / COMMENTS MODAL ══ -->
+ <div class="modal-bg" id="modal-taskdetail">
+   <div class="modal" style="width:520px">
+     <div class="modal-title"><i class="ti ti-clipboard-text" style="font-size:16px;color:var(--accent)"></i> Task Details</div>
+     <div id="td-title" style="font-size:14px;font-weight:600;color:var(--ink-900);margin-bottom:8px">—</div>
+     <div class="task-detail-meta" id="td-meta"></div>
+     <div class="divider"></div>
+     <div class="section-head"><span class="section-label">Comments</span><span class="chip chip-muted" id="td-cmt-count">0</span></div>
+     <div class="comment-list" id="td-comments"></div>
+     <div class="fg" style="margin-bottom:8px"><textarea id="td-new-comment" placeholder="Add a comment for the team…" style="min-height:54px"></textarea></div>
+     <div class="modal-actions"><button class="btn" onclick="closeModal('taskdetail')">Close</button><button class="btn btn-primary" onclick="addTaskComment()"><i class="ti ti-send" style="font-size:13px"></i> Post Comment</button></div>
+   </div>
+ </div>
+
+<!-- ══ REASSIGN MODAL ══ -->
+ <div class="modal-bg" id="modal-member">
+   <div class="modal">
+     <div class="modal-title" id="member-modal-title"><i class="ti ti-user-edit" style="font-size:16px;color:var(--accent)"></i> Edit Member</div>
+     <input type="hidden" id="member-id">
+     <div class="fg"><label>Full name</label><input type="text" id="member-name" placeholder="Maria Santos"></div>
+     <div class="fg"><label>Email</label><input type="email" id="member-email" placeholder="maria@example.com"></div>
+     <div class="fg-row">
+       <div class="fg"><label>Role</label><select id="member-role"></select></div>
+       <div class="fg"><label>Domain</label><select id="member-domain"></select></div>
+     </div>
+     <div class="fg"><label>Reset password</label><input type="text" id="member-pass" placeholder="Leave blank to keep current"></div>
+     <div class="modal-actions"><button class="btn" onclick="closeModal('member')">Cancel</button><button class="btn btn-danger" onclick="deleteMemberFromModal()"><i class="ti ti-trash" style="font-size:13px"></i> Delete</button><button class="btn btn-primary" onclick="saveMember()"><i class="ti ti-check" style="font-size:13px"></i> Save</button></div>
+   </div>
+ </div>
+
+ <div class="modal-bg" id="modal-assign">
+  <div class="modal">
+    <div class="modal-title"><i class="ti ti-user-check" style="font-size:16px;color:var(--accent)"></i> Reassign Task</div>
+    <div style="background:var(--ink-50);border:1px solid var(--ink-200);border-radius:var(--radius);padding:10px 12px;margin-bottom:16px;font-size:13px;color:var(--ink-700);line-height:1.4" id="assign-t-title">—</div>
+    <div class="fg"><label>Assign to</label><select id="assign-owner"></select></div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal('assign')">Cancel</button><button class="btn btn-primary" onclick="confirmAssign()">Reassign</button></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  APPS SCRIPT SOURCE  (deployed as Google Web App)
+// ══════════════════════════════════════════════════════════════
+const APPS_SCRIPT_SOURCE = `
+const SHEET_ID = SpreadsheetApp.getActiveSpreadsheet().getId();
+
+function doGet(e) {
+  const action = (e && e.parameter && e.parameter.action) || "";
+  if (!action) {
+    // No action param = a browser/Google Sites loading the page itself.
+    // Requires a second file in this Apps Script project named "Index.html"
+    // containing the full front-end (see setup step 3).
+    return HtmlService.createHtmlOutputFromFile('Index')
+      .setTitle('MSSP Deploy')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let result;
+  try {
+    if (!ss) throw new Error('No active spreadsheet');
+    if (action === 'ping')        result = { ok: true, ts: new Date().toISOString() };
+    else if (action === 'load')   result = loadAll(ss);
+    else result = { error: 'Unknown action' };
+  } catch(err) { result = { error: err.message }; }
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  const body = e && e.postData && e.postData.contents ? JSON.parse(e.postData.contents) : { action: '' };
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let result;
+  try {
+    if (!ss) throw new Error('No active spreadsheet');
+    if (body.action === 'save') { saveAll(ss, body.data); result = { ok: true }; }
+    else     if (body.action === 'savePhase1Attachment') { result = savePhase1Attachment(ss, body.attachment); }
+    else if (body.action === 'deletePhase1Attachment') { result = deletePhase1Attachment(ss, body.id); }
+    else     if (body.action === 'sendInviteEmail') { result = sendInviteEmail(ss, body.invite); }
+    else if (body.action === 'resendInviteEmail') { result = resendInviteEmail(ss, body.invite); }
+    else result = { error: 'Unknown action' };
+  } catch(err) { result = { error: err.message }; }
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function ensureSheet(ss, name, headers) {
+  let sh = ss.getSheetByName(name);
+  if (!sh) { sh = ss.insertSheet(name); sh.appendRow(headers); }
+  return sh;
+}
+
+function sheetToArr(sh) {
+  const data = sh.getDataRange().getValues();
+  if (data.length < 2) return [];
+  const headers = data[0];
+  return data.slice(1).map(row => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = row[i]);
+    return obj;
+  });
+}
+
+function arrToSheet(sh, headers, rows) {
+  sh.clearContents();
+  sh.appendRow(headers);
+  rows.forEach(r => sh.appendRow(headers.map(h => r[h] !== undefined ? r[h] : '')));
+}
+
+function findOrCreateDriveFolder(folderName) {
+  const folders = DriveApp.getFoldersByName(folderName);
+  if (folders.hasNext()) return folders.next();
+  return DriveApp.createFolder(folderName);
+}
+
+function savePhase1Attachment(ss, attachment) {
+  const phSh = ensureSheet(ss,'Phase1Attachments', ['id','projectId','projectName','name','type','size','date','uploadedBy','driveFileId','driveUrl','folderId','folderName']);
+  const folderName = (attachment.projectName || attachment.projectId || 'Project') + ' Phase 1';
+  const folder = findOrCreateDriveFolder(folderName);
+  const dataUrl = attachment.dataUrl || '';
+  const comma = dataUrl.indexOf(',');
+  if (comma < 0) throw new Error('Missing file data');
+  const mimeType = dataUrl.substring(5, comma).split(';')[0] || attachment.type || 'application/octet-stream';
+  const bytes = Utilities.base64Decode(dataUrl.substring(comma + 1));
+  const blob = Utilities.newBlob(bytes, mimeType, attachment.name);
+  let driveFile;
+  const existing = folder.getFilesByName(attachment.name);
+  if (existing.hasNext()) {
+    driveFile = existing.next();
+    driveFile.setContent(blob.getBytes());
+  } else {
+    driveFile = folder.createFile(blob);
+  }
+  const saved = {
+    id: attachment.id,
+    projectId: attachment.projectId,
+    projectName: attachment.projectName,
+    name: attachment.name,
+    type: mimeType,
+    size: attachment.size,
+    date: attachment.date || new Date().toISOString(),
+    uploadedBy: attachment.uploadedBy || Session.getActiveUser().getEmail(),
+    driveFileId: driveFile.getId(),
+    driveUrl: driveFile.getUrl(),
+    folderId: folder.getId(),
+    folderName: folderName
+  };
+  const rows = sheetToArr(phSh).filter(a => a.id !== attachment.id);
+  rows.push(saved);
+  arrToSheet(phSh, ['id','projectId','projectName','name','type','size','date','uploadedBy','driveFileId','driveUrl','folderId','folderName'], rows);
+  return { ok: true, attachment: saved };
+}
+
+function deletePhase1Attachment(ss, id) {
+  const phSh = ensureSheet(ss,'Phase1Attachments', ['id','projectId','projectName','name','type','size','date','uploadedBy','driveFileId','driveUrl','folderId','folderName']);
+  const rows = sheetToArr(phSh);
+  const target = rows.find(a => a.id === id);
+  if (target && target.driveFileId) {
+    try { DriveApp.getFileById(target.driveFileId).setTrashed(true); } catch(e) {}
+  }
+  const filtered = rows.filter(a => a.id !== id);
+  arrToSheet(phSh, ['id','projectId','projectName','name','type','size','date','uploadedBy','driveFileId','driveUrl','folderId','folderName'], filtered);
+  return { ok: true, attachments: filtered };
+}
+
+function sendInviteEmail(ss, invite) {
+  const mSh = ensureSheet(ss,'Members', ['id','name','email','password','role','domain','initials','color','textColor']);
+  const iSh = ensureSheet(ss,'Invites', ['id','email','role','domain','invitedBy','date']);
+  const rows = sheetToArr(mSh);
+  const existing = rows.find(r => r.email.toLowerCase() === invite.email.toLowerCase());
+  if (existing) {
+    return { ok: true, alreadyMember: true, name: existing.name };
+  }
+  const id = invite.id || 'MEM' + Date.now();
+  const email = invite.email;
+  const name = invite.name;
+  const role = invite.role || 'member';
+  const domain = invite.domain || 'ALL';
+  const password = invite.password || 'Welcome2026!';
+  const initials = String(name).split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'XX';
+  const palette = [['#B5D4F4','#0C447C'],['#CECBF6','#3C3489'],['#9FE1CB','#085041'],['#FAC775','#633806'],['#FFC4B5','#7A2810']];
+  const [col, tc] = palette[rows.length % palette.length];
+  const newMember = { id, name, email, password, role, domain, initials, color: col, textColor: tc };
+  rows.push(newMember);
+  arrToSheet(mSh, ['id','name','email','password','role','domain','initials','color','textColor'], rows);
+  const inviteRow = { id: id + '_inv', email, role, domain, invitedBy: invite.invitedBy || 'Admin', date: new Date().toISOString().split('T')[0] };
+  arrToSheet(iSh, ['id','email','role','domain','invitedBy','date'], [...sheetToArr(iSh), inviteRow]);
+  try {
+    const subject = 'You have been invited to MSSP Deploy';
+    const body = 'Hi ' + name + ',\\n\\n' +
+      'You have been invited to the MSSP Deploy Project Manager.\\n\\n' +
+      'Login URL: ' + ScriptApp.getService().getUrl() + '\\n' +
+      'Email: ' + email + '\\n' +
+      'Temporary password: ' + password + '\\n\\n' +
+      'Please sign in and change your password after your first login.\\n\\n' +
+      'If you did not expect this invitation, you can ignore this email.';
+    MailApp.sendEmail({ to: email, subject: subject, body: body });
+  } catch (emailErr) {
+    return { ok: true, emailError: emailErr.message, member: newMember, invite: inviteRow };
+  }
+  return { ok: true, member: newMember, invite: inviteRow };
+}
+
+function resendInviteEmail(ss, invite) {
+  const mSh = ensureSheet(ss,'Members', ['id','name','email','password','role','domain','initials','color','textColor']);
+  const rows = sheetToArr(mSh);
+  const existing = rows.find(r => r.email.toLowerCase() === invite.email.toLowerCase());
+  if (!existing) {
+    return { ok: true, notFound: true };
+  }
+  try {
+    const subject = 'Reminder: You have been invited to MSSP Deploy';
+    const body = 'Hi ' + existing.name + ',\\n\\n' +
+      'This is a reminder that you have been invited to the MSSP Deploy Project Manager.\\n\\n' +
+      'Login URL: ' + ScriptApp.getService().getUrl() + '\\n' +
+      'Email: ' + existing.email + '\\n' +
+      'Temporary password: ' + existing.password + '\\n\\n' +
+      'Please sign in and change your password after your first login.\\n\\n' +
+      'If you did not expect this invitation, you can ignore this email.';
+    MailApp.sendEmail({ to: existing.email, subject: subject, body: body });
+  } catch (emailErr) {
+    return { ok: true, emailError: emailErr.message };
+  }
+  return { ok: true, sent: true };
+}
+
+function loadAll(ss) {
+  const tSh = ensureSheet(ss,'Tasks',    ['id','title','tag','pri','due','owner','col']);
+  const mSh = ensureSheet(ss,'Members',  ['id','name','email','password','role','domain','initials','color','textColor']);
+  const iSh = ensureSheet(ss,'Invites',  ['id','email','role','domain','invitedBy','date']);
+  const aSh = ensureSheet(ss,'Activity', ['icon','color','bg','text','time']);
+  const asSh= ensureSheet(ss,'Assets',   ['id','icon','name','detail','pct','col','label','ic']);
+  const pSh = ensureSheet(ss,'Projects', ['id','name','description','owner','members','color']);
+  const piSh= ensureSheet(ss,'ProjectInvites', ['id','projectId','email','role','domain','invitedBy','date']);
+const phSh= ensureSheet(ss,'Phase1Attachments', ['id','projectId','projectName','name','type','size','date','uploadedBy','driveFileId','driveUrl','folderId','folderName']);
+   const vSh = ensureSheet(ss,'Vendors',  ['id','name','contact','email','licenseStart','licenseEnd','support','notes']);
+   const rSh = ensureSheet(ss,'Risks',    ['id','risk','cat','like','impact','level','owner','mit']);
+   const tcSh= ensureSheet(ss,'TaskComments', ['id','taskId','author','text','date']);
+   const mSh2= ensureSheet(ss,'Meta',     ['key','value']);
+   const meta = sheetToArr(mSh2);
+   const nextId = (meta.find(r=>r.key==='nextId') || {}).value || 1;
+   const assetsSaved = (meta.find(r=>r.key==='assetsSaved') || {}).value === 'true';
+   const risksSaved = (meta.find(r=>r.key==='risksSaved') || {}).value === 'true';
+   const taskCommentsSaved = (meta.find(r=>r.key==='taskCommentsSaved') || {}).value === 'true';
+   const defaultRoles = [{id:'admin',label:'Admin'},{id:'lead',label:'Lead'},{id:'member',label:'Member'},{id:'viewer',label:'Viewer'}];
+   const defaultDomains = ['ALL','NET','SOC','EDR','IAM','VM','LOG'];
+   let roleOptions = defaultRoles;
+   let domainOptions = defaultDomains.slice();
+   try { const rv = (meta.find(r=>r.key==='roles') || {}).value; if(rv) roleOptions = JSON.parse(rv); } catch(e) { roleOptions = defaultRoles; }
+   try { const dv = (meta.find(r=>r.key==='domains') || {}).value; if(dv) domainOptions = JSON.parse(dv); } catch(e) { domainOptions = defaultDomains; }
+   return {
+     tasks:      sheetToArr(tSh),
+     members:    sheetToArr(mSh),
+     invites:    sheetToArr(iSh),
+     activities: sheetToArr(aSh),
+     assets:     sheetToArr(asSh),
+     projects:   sheetToArr(pSh),
+     projectInvites: sheetToArr(piSh),
+     phase1Attachments: sheetToArr(phSh),
+     vendors:    sheetToArr(vSh),
+     risks:      sheetToArr(rSh),
+     taskComments: sheetToArr(tcSh),
+     assetsSaved,
+     risksSaved,
+     taskCommentsSaved,
+     roleOptions,
+     domainOptions,
+     nextId:     parseInt(nextId)
+   };
+ }
+
+function saveAll(ss, data) {
+   const tSh = ensureSheet(ss,'Tasks',    ['id','title','tag','pri','due','owner','col']);
+   const mSh = ensureSheet(ss,'Members',  ['id','name','email','password','role','domain','initials','color','textColor']);
+   const iSh = ensureSheet(ss,'Invites',  ['id','email','role','domain','invitedBy','date']);
+   const aSh = ensureSheet(ss,'Activity', ['icon','color','bg','text','time']);
+   const asSh= ensureSheet(ss,'Assets',   ['id','icon','name','detail','pct','col','label','ic']);
+   const pSh = ensureSheet(ss,'Projects', ['id','name','description','owner','members','color']);
+   const piSh= ensureSheet(ss,'ProjectInvites', ['id','projectId','email','role','domain','invitedBy','date']);
+   const phSh= ensureSheet(ss,'Phase1Attachments', ['id','projectId','projectName','name','type','size','date','uploadedBy','driveFileId','driveUrl','folderId','folderName']);
+   const vSh = ensureSheet(ss,'Vendors',  ['id','name','contact','email','licenseStart','licenseEnd','support','notes']);
+   const rSh = ensureSheet(ss,'Risks',    ['id','risk','cat','like','impact','level','owner','mit']);
+   const tcSh= ensureSheet(ss,'TaskComments', ['id','taskId','author','text','date']);
+   const metaSh = ensureSheet(ss,'Meta',  ['key','value']);
+   const defaultRoles = [{id:'admin',label:'Admin'},{id:'lead',label:'Lead'},{id:'member',label:'Member'},{id:'viewer',label:'Viewer'}];
+   const defaultDomains = ['ALL','NET','SOC','EDR','IAM','VM','LOG'];
+   arrToSheet(tSh, ['id','title','tag','pri','due','owner','col'], data.tasks || []);
+   arrToSheet(mSh, ['id','name','email','password','role','domain','initials','color','textColor'], data.members || []);
+   arrToSheet(iSh, ['id','email','role','domain','invitedBy','date'], data.invites || []);
+   arrToSheet(aSh, ['icon','color','bg','text','time'], (data.activities||[]).slice(0,8));
+   arrToSheet(asSh, ['id','icon','name','detail','pct','col','label','ic'], data.assets || []);
+   arrToSheet(pSh, ['id','name','description','owner','members','color'], (data.projects||[]).map(p=>({...p,members:(p.members||[]).join(",")})));
+   arrToSheet(piSh, ['id','projectId','email','role','domain','invitedBy','date'], data.projectInvites || []);
+   arrToSheet(phSh, ['id','projectId','projectName','name','type','size','date','uploadedBy','driveFileId','driveUrl','folderId','folderName'], (data.phase1Attachments||[]).map(a=>({
+     id:a.id, projectId:a.projectId, projectName:a.projectName, name:a.name, type:a.type, size:a.size, date:a.date, uploadedBy:a.uploadedBy,
+     driveFileId:a.driveFileId, driveUrl:a.driveUrl, folderId:a.folderId, folderName:a.folderName
+   })));
+   arrToSheet(vSh, ['id','name','contact','email','licenseStart','licenseEnd','support','notes'], data.vendors || []);
+   arrToSheet(rSh, ['id','risk','cat','like','impact','level','owner','mit'], data.risks || []);
+   arrToSheet(tcSh, ['id','taskId','author','text','date'], data.taskComments || []);
+   arrToSheet(metaSh, ['key','value'], [
+     { key:'nextId', value: data.nextId||1 },
+     { key:'assetsSaved', value: 'true' },
+     { key:'risksSaved', value: 'true' },
+     { key:'taskCommentsSaved', value: 'true' },
+     { key:'roles', value: JSON.stringify(data.roleOptions || defaultRoles) },
+     { key:'domains', value: JSON.stringify(data.domainOptions || defaultDomains) }
+   ]);
+ }
+`.trim();
+
+document.getElementById("script-preview").textContent = APPS_SCRIPT_SOURCE;
+function copyScript() {
+  navigator.clipboard.writeText(APPS_SCRIPT_SOURCE).then(() => toast("Apps Script copied!", "ok"));
+}
+
+// ══════════════════════════════════════════════════════════════
+//  GOOGLE SHEETS API LAYER
+// ══════════════════════════════════════════════════════════════
+let GS_URL = "";
+let cloudMode = false;
+let saveTimer = null;
+
+function setSyncPill(state) {
+  const el = document.getElementById("sync-pill");
+  if (!el) return;
+  const map = {
+    ok:  ["sync-ok",  "ti-cloud-check", "Synced"],
+    busy:["sync-busy","ti-loader-2",    "Saving…"],
+    err: ["sync-err", "ti-cloud-x",     "Sync error"],
+    off: ["sync-off", "ti-device-floppy","Local only"],
+  };
+  const [cls,icon,lbl] = map[state]||map.ok;
+  el.className = "sync-pill "+cls;
+  el.innerHTML = `<i class="ti ${icon}" style="font-size:10px"></i> ${lbl}`;
+}
+
+async function gsLoad() {
+  const res = await fetch(GS_URL + "?action=load", { redirect:"follow", cache:"no-store" });
+  const text = await res.text();
+  let j;
+  try { j = JSON.parse(text); } catch(e) { throw new Error("HTTP "+res.status+": "+text.slice(0,200)); }
+  if (!res.ok) throw new Error("HTTP "+res.status+": "+(j.error || text.slice(0,200)));
+  if (j.error) throw new Error(j.error);
+  return j;
+}
+
+async function gsPing() {
+  const res = await fetch(GS_URL + "?action=ping", { redirect:"follow", cache:"no-store" });
+  const text = await res.text();
+  let j;
+  try { j = JSON.parse(text); } catch(e) { throw new Error("HTTP "+res.status+": "+text.slice(0,200)); }
+  if (!res.ok) throw new Error("HTTP "+res.status+": "+(j.error || text.slice(0,200)));
+  if (j.error) throw new Error(j.error);
+  return j.ok === true;
+}
+
+async function gsSave(data) {
+  const res = await fetch(GS_URL, {
+    method:"POST", redirect:"follow",
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify({ action:"save", data })
+  });
+  const text = await res.text();
+  let j;
+  try { j = JSON.parse(text); } catch(e) { throw new Error("HTTP "+res.status+": "+text.slice(0,200)); }
+  if (!res.ok) throw new Error("HTTP "+res.status+": "+(j.error || text.slice(0,200)));
+  if (j.error) throw new Error(j.error);
+  return true;
+}
+
+async function gsSavePhase1Attachment(attachment) {
+  const res = await fetch(GS_URL, {
+    method:"POST", redirect:"follow",
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify({ action:"savePhase1Attachment", attachment })
+  });
+  const text = await res.text();
+  let j;
+  try { j = JSON.parse(text); } catch(e) { throw new Error("HTTP "+res.status+": "+text.slice(0,200)); }
+  if (!res.ok) throw new Error("HTTP "+res.status+": "+(j.error || text.slice(0,200)));
+  if (j.error) throw new Error(j.error);
+  return j.attachment;
+}
+
+async function gsDeletePhase1Attachment(id) {
+  const res = await fetch(GS_URL, {
+    method:"POST", redirect:"follow",
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify({ action:"deletePhase1Attachment", id })
+  });
+  const text = await res.text();
+  let j;
+  try { j = JSON.parse(text); } catch(e) { throw new Error("HTTP "+res.status+": "+text.slice(0,200)); }
+  if (!res.ok) throw new Error("HTTP "+res.status+": "+(j.error || text.slice(0,200)));
+  if (j.error) throw new Error(j.error);
+  phase1Attachments = j.attachments || [];
+  return true;
+}
+
+async function gsSendInviteEmail(invite) {
+  const res = await fetch(GS_URL, {
+    method: "POST", redirect: "follow",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action: "sendInviteEmail", invite })
+  });
+  const text = await res.text();
+  let j;
+  try { j = JSON.parse(text); } catch(e) { throw new Error("HTTP "+res.status+": "+text.slice(0,200)); }
+  if (!res.ok) throw new Error("HTTP "+res.status+": "+(j.error || text.slice(0,200)));
+  if (j.error) throw new Error(j.error);
+  return j;
+}
+
+async function gsResendInviteEmail(invite) {
+  const res = await fetch(GS_URL, {
+    method: "POST", redirect: "follow",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action: "resendInviteEmail", invite })
+  });
+  const text = await res.text();
+  let j;
+  try { j = JSON.parse(text); } catch(e) { throw new Error("HTTP "+res.status+": "+text.slice(0,200)); }
+  if (!res.ok) throw new Error("HTTP "+res.status+": "+(j.error || text.slice(0,200)));
+  if (j.error) throw new Error(j.error);
+  return j;
+}
+
+function getSnapshot() { return { tasks, members, invites, activities, assets, roleOptions, domainOptions, projects, projectInvites, phase1Attachments, vendors, risks, taskComments, nextId }; }
+
+function applySnapshot(snap) {
+  if (snap.tasks      && snap.tasks.length)      tasks      = snap.tasks.map(t=>({...t,id:parseInt(t.id)||t.id}));
+  if (snap.members    && snap.members.length)     members    = snap.members;
+  if (snap.invites    && snap.invites.length)     invites    = snap.invites;
+  if (snap.activities && snap.activities.length)  activities = snap.activities;
+  if (snap.assets && (snap.assetsSaved || snap.assets.length)) assets = snap.assets.map(a=>({...a,pct:parseInt(a.pct)||0}));
+  if (snap.risks && (snap.risksSaved || snap.risks.length)) risks = snap.risks;
+  if (snap.taskComments && (snap.taskCommentsSaved || snap.taskComments.length)) taskComments = snap.taskComments.map(c=>({...c,taskId:parseInt(c.taskId)||c.taskId}));
+  if (Array.isArray(snap.roleOptions)) roleOptions=snap.roleOptions;
+  if (Array.isArray(snap.domainOptions)) domainOptions=snap.domainOptions;
+  if (Array.isArray(snap.projects)) projects=snap.projects.map(p=>({...p,phase:parseInt(p.phase)||1,members:Array.isArray(p.members)?p.members:String(p.members||"").split(",").filter(Boolean)}));
+  if (Array.isArray(snap.projectInvites)) projectInvites=snap.projectInvites;
+if (Array.isArray(snap.phase1Attachments)) phase1Attachments=snap.phase1Attachments.map(a=>({...a,size:parseInt(a.size)||0}));
+   if (Array.isArray(snap.vendors)) vendors=snap.vendors;
+   if (projects.length && !projects.some(p=>p.id===activeProjectId)) activeProjectId=projects[0].id;
+  if (snap.nextId) nextId = parseInt(snap.nextId)||nextId;
+}
+
+function localSave() { localStorage.setItem("mssp_snap",JSON.stringify(getSnapshot())); }
+
+async function saveToCloud(force) {
+  localSave();
+  if (!cloudMode) { setSyncPill("off"); return; }
+  setSyncPill("busy");
+  clearTimeout(saveTimer);
+  try {
+    await gsSave(getSnapshot());
+    setSyncPill("ok");
+    if (force) toast("Synced to Google Sheets","ok");
+  } catch(e) {
+    setSyncPill("err");
+    toast("Sync failed — saved locally","warn");
+  }
+}
+
+function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(()=>saveToCloud(false),1800); }
+function forceSave()    { saveToCloud(true); }
+
+// ══════════════════════════════════════════════════════════════
+//  LIVE REFRESH — keep dashboard (and the active view) in sync
+//  with the in-memory data on every change, and pull remote
+//  changes from Google Sheets periodically.
+// ══════════════════════════════════════════════════════════════
+function renderDashboardSafe(){ try{ renderDashboard(); }catch(e){} }
+
+const viewRenderers = {
+  dashboard: renderDashboardSafe,
+  projects:  ()=>renderProjects(),
+  knowledge: ()=>renderKnowledgeBase(),
+  kanban:    ()=>renderKanban(activeFilter),
+  gantt:     ()=>renderGantt(),
+  assets:    ()=>renderAssets(),
+  risks:     ()=>renderRisks(),
+  vendors:   ()=>renderVendors(),
+  members:   ()=>renderMembers(),
+  settings:  ()=>renderSettings(),
+};
+
+function activeViewId(){
+  const el=document.querySelector(".view.active");
+  return el ? el.id.replace("view-","") : null;
+}
+
+// Call this after ANY data mutation so the dashboard (and whichever
+// view is currently open) always reflect the latest state, then
+// queue a cloud save.
+function afterDataChange(skipDashboard){
+  if(!skipDashboard) renderDashboardSafe();
+  const id=activeViewId();
+  if(id && id!=="dashboard" && viewRenderers[id]) { try{ viewRenderers[id](); }catch(e){} }
+  scheduleSave();
+}
+
+let pollTimer=null;
+function startPolling(){
+  stopPolling();
+  if(!cloudMode) return;
+  pollTimer=setInterval(async ()=>{
+    if(document.querySelector(".modal-bg.open")) return; // don't disrupt active editing
+    if(!currentUser) return;
+    try{
+      const snap = await gsLoad();
+      applySnapshot(snap);
+      localSave();
+      renderDashboardSafe();
+      const id=activeViewId();
+      if(id && id!=="dashboard" && viewRenderers[id]) { try{ viewRenderers[id](); }catch(e){} }
+      setSyncPill("ok");
+    }catch(e){ /* keep last good state, stay quiet */ }
+  }, 20000);
+}
+function stopPolling(){ if(pollTimer){ clearInterval(pollTimer); pollTimer=null; } }
+
+// ══════════════════════════════════════════════════════════════
+//  SETUP SCREEN
+// ══════════════════════════════════════════════════════════════
+async function setupConnect() {
+  const url = document.getElementById("gsheet-url").value.trim();
+  if (!url || !url.startsWith("https://script.google.com")) {
+    showSetupErr("Please paste a valid Google Apps Script Web App URL (starts with https://script.google.com).");
+    return;
+  }
+  if (url.includes("/dev")) {
+    showSetupErr("Use the deployed Web App URL ending in /exec, not the test /dev URL.");
+    return;
+  }
+  if (!url.includes("/exec")) {
+    showSetupErr("Use the deployed Web App URL ending in /exec.");
+    return;
+  }
+  GS_URL = url.replace(/\/+$/, "");
+  const btn = document.getElementById("setup-btn");
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2" style="font-size:14px"></i> Connecting…';
+  document.getElementById("setup-err").style.display = "none";
+
+  setLoading(true, "Pinging Google Sheets…");
+  try {
+    await gsPing();
+    setLoading(true, "Loading data…");
+    const snap = await gsLoad();
+    applySnapshot(snap);
+    localStorage.setItem("mssp_gs_url", url);
+    cloudMode = true;
+    setLoading(false);
+    if (!members.length) {
+      showBootstrap();
+    } else {
+      showLogin();
+      toast("Connected to Google Sheets ✓","ok");
+    }
+  } catch(e) {
+    setLoading(false);
+    GS_URL = ""; cloudMode = false;
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-plug" style="font-size:14px"></i> Connect to Google Sheets';
+    showSetupErr("Connection failed: " + e.message + ". Redeploy as a new Web App version with doGet as the entry point, execute as Me, access Anyone, and paste the /exec URL here.");
+  }
+}
+
+function setupSkip() {
+  cloudMode = false; GS_URL = "";
+  const cached = localStorage.getItem("mssp_snap");
+  if (cached) try { applySnapshot(JSON.parse(cached)); } catch(e){}
+  setLoading(false);
+  if (!members.length) showBootstrap(); else showLogin();
+}
+
+function showSetupErr(msg) {
+  const el = document.getElementById("setup-err");
+  document.getElementById("setup-err-txt").textContent = msg;
+  el.style.display = "flex";
+}
+
+function resetSetup() {
+  localStorage.removeItem("mssp_gs_url");
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("login-screen").classList.add("hidden");
+  document.getElementById("bootstrap-screen").classList.add("hidden");
+  document.getElementById("setup-screen").classList.remove("hidden");
+  document.getElementById("gsheet-url").value = "";
+  document.getElementById("setup-err").style.display = "none";
+  const btn = document.getElementById("setup-btn");
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-plug" style="font-size:14px"></i> Connect to Google Sheets';
+}
+
+function showLogin() {
+  document.getElementById("setup-screen").classList.add("hidden");
+  document.getElementById("bootstrap-screen").classList.add("hidden");
+  document.getElementById("login-screen").classList.remove("hidden");
+  if (cloudMode) {
+    const u = new URL(GS_URL);
+    document.getElementById("topbar-db-label").textContent = "Google Sheets · " + u.hostname;
+  }
+}
+
+function showBootstrap() {
+  document.getElementById("setup-screen").classList.add("hidden");
+  document.getElementById("login-screen").classList.add("hidden");
+  document.getElementById("bootstrap-screen").classList.remove("hidden");
+}
+
+function showBootstrapErr(msg) {
+  const el = document.getElementById("bootstrap-err");
+  document.getElementById("bootstrap-err-txt").textContent = msg;
+  el.style.display = "flex";
+}
+
+async function completeBootstrap() {
+  const name=document.getElementById("bs-name").value.trim();
+  const email=document.getElementById("bs-email").value.trim();
+  const pass=document.getElementById("bs-pass").value;
+  if(!name||!email||!pass){ showBootstrapErr("Name, email, and password are all required."); return; }
+  if(!email.includes("@")){ showBootstrapErr("Enter a valid email address."); return; }
+  if(pass.length<6){ showBootstrapErr("Password must be at least 6 characters."); return; }
+  document.getElementById("bootstrap-err").style.display="none";
+  const btn=document.getElementById("bootstrap-btn");
+  btn.disabled=true; btn.innerHTML='<i class="ti ti-loader-2" style="font-size:14px"></i> Creating…';
+  const initials=name.split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2)||"AD";
+  const admin={id:"ADMIN_"+Date.now(),name,email,password:pass,role:"admin",domain:"ALL",initials,color:"#B5D4F4",textColor:"#185FA5"};
+  members=[admin];
+  setLoading(true,"Saving your Admin account…");
+  try{
+    if(cloudMode){ await gsSave(getSnapshot()); }
+    localSave();
+    setLoading(false);
+    toast("Admin account created ✓","ok");
+    showLogin();
+    document.getElementById("le").value=email;
+  }catch(e){
+    setLoading(false);
+    btn.disabled=false; btn.innerHTML='<i class="ti ti-check" style="font-size:14px"></i> Create Admin account';
+    showBootstrapErr("Could not save to Google Sheets: "+e.message+". Check your Apps Script deployment and try again.");
+  }
+}
+
+function setLoading(show, txt) {
+  const el = document.getElementById("loading");
+  if (show) { el.classList.remove("hidden"); document.getElementById("loading-txt").textContent = txt||"Loading…"; }
+  else el.classList.add("hidden");
+}
+
+// ══════════════════════════════════════════════════════════════
+//  AUTH
+// ══════════════════════════════════════════════════════════════
+let currentUser = null;
+
+function doLogin() {
+  const email = document.getElementById("le").value.trim().toLowerCase();
+  const pass  = document.getElementById("lp").value;
+  const user  = members.find(m => m.email.toLowerCase()===email && m.password===pass);
+  if (!user) { document.getElementById("login-err").style.display="flex"; return; }
+  document.getElementById("login-err").style.display="none";
+  currentUser = user;
+  document.getElementById("login-screen").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  document.getElementById("sb-name").textContent = user.name;
+  document.getElementById("sb-role").textContent = user.role.charAt(0).toUpperCase()+user.role.slice(1);
+  const av = document.getElementById("sb-av");
+  av.textContent = user.initials;
+  av.style.background = user.color; av.style.color = user.textColor;
+  av.style.width="32px"; av.style.height="32px"; av.style.fontSize="11px";
+  const isAdmin = user.role==="admin"||user.role==="lead";
+  const canManageSettings = user.role==="admin";
+  document.getElementById("btn-invite").style.display    = isAdmin?"inline-flex":"none";
+  document.getElementById("mem-invite-btn").style.display= isAdmin?"inline-flex":"none";
+  document.getElementById("sb-settings").style.display   = canManageSettings?"flex":"none";
+  if (!cloudMode) setSyncPill("off");
+  initApp();
+  startPolling();
+}
+
+document.getElementById("lp").addEventListener("keydown",e=>{ if(e.key==="Enter") doLogin(); });
+
+function doLogout() {
+  currentUser=null;
+  stopPolling();
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("login-screen").classList.remove("hidden");
+  document.getElementById("le").value=""; document.getElementById("lp").value="";
+}
+
+// ══════════════════════════════════════════════════════════════
+//  DEFAULT DATA
+// ══════════════════════════════════════════════════════════════
+// All operational data below is loaded entirely from Google Sheets via
+// gsLoad()/applySnapshot() — nothing here is seeded or fake. These start
+// empty and stay empty until your Sheet (or local fallback) has real rows.
+let members = [];
+let invites=[], nextId=1;
+
+let tasks=[];
+let taskComments=[];
+let activities=[];
+
+// Domain metadata used purely for labeling/coloring computed rows below —
+// not records, just display config (matches the Domain dropdown options).
+const TAG_META={
+  NET:{name:"Network Segmentation",col:"c-blue"},
+  SOC:{name:"SOC / SIEM Integration",col:"c-purple"},
+  EDR:{name:"EDR Deployment",col:"c-teal"},
+  IAM:{name:"IAM & PAM Setup",col:"c-amber"},
+  VM:{name:"Vulnerability Mgmt",col:"c-coral"},
+  LOG:{name:"Log Management / SIEM",col:"c-green"},
+};
+function tagMeta(tag){ return TAG_META[tag]||{name:tag,col:"c-gray"}; }
+function mostCommonOwner(list){
+  const counts={}; list.forEach(t=>counts[t.owner]=(counts[t.owner]||0)+1);
+  return Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0]||"";
+}
+
+// Workstream Status table — one row per domain tag, computed live from
+// whatever tasks actually exist in the active project. No fake percentages.
+function computeWorkstreams(){
+  const scoped=activeProjectId?tasks.filter(t=>t.project===activeProjectId):tasks;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const byTag={};
+  scoped.forEach(t=>{ (byTag[t.tag]=byTag[t.tag]||[]).push(t); });
+  return Object.keys(byTag).map(tag=>{
+    const list=byTag[tag];
+    const doneCt=list.filter(t=>t.col==="done").length;
+    const pct=list.length?Math.round(doneCt/list.length*100):0;
+    const overdue=list.some(t=>t.col!=="done"&&t.due&&new Date(t.due+"T00:00:00")<today);
+    const pending=list.filter(t=>t.col!=="done"&&t.due);
+    const source=pending.length?pending:list.filter(t=>t.due);
+    let due="—";
+    if(source.length) due=fmtDateShort(source.slice().sort((a,b)=>String(a.due).localeCompare(String(b.due))).pop().due);
+    const status=pct===100?"sp-done":overdue?"sp-hold":pct===0?"sp-plan":"sp-prog";
+    const m=tagMeta(tag);
+    return {name:m.name,owner:mostCommonOwner(list),pct,status,due,col:m.col,overdue};
+  }).sort((a,b)=>b.pct-a.pct);
+}
+
+// Deployment Timeline (Gantt) — bars span each domain's real task due dates;
+// sub-rows mark each task's actual due date. Derived purely from live tasks.
+function computeGanttRows(){
+  const scoped=(activeProjectId?tasks.filter(t=>t.project===activeProjectId):tasks).filter(t=>t.due);
+  if(!scoped.length) return [];
+  const allMs=scoped.map(t=>new Date(t.due+"T00:00:00").getTime());
+  const today=new Date(); today.setHours(0,0,0,0);
+  let minMs=Math.min(today.getTime(),...allMs), maxMs=Math.max(...allMs);
+  const rangeDays=Math.max(1,Math.round((maxMs-minMs)/86400000));
+  const padDays=Math.max(3,Math.round(rangeDays*0.12));
+  minMs-=padDays*86400000; maxMs+=padDays*86400000;
+  const totalDays=Math.max(1,(maxMs-minMs)/86400000);
+  const pos=ms=>Math.max(0,Math.min(100,((ms-minMs)/86400000)/totalDays*100));
+  const byTag={};
+  scoped.forEach(t=>{ (byTag[t.tag]=byTag[t.tag]||[]).push(t); });
+  const colMap={backlog:"sp-plan",inprogress:"sp-prog",review:"sp-hold",done:"sp-done"};
+  const rows=[];
+  Object.keys(byTag).forEach(tag=>{
+    const list=byTag[tag].slice().sort((a,b)=>String(a.due).localeCompare(String(b.due)));
+    const m=tagMeta(tag);
+    const ms=list.map(t=>new Date(t.due+"T00:00:00").getTime());
+    const start=pos(Math.min(...ms)), end=Math.max(start+4,pos(Math.max(...ms)));
+    const groupStatus=list.every(t=>t.col==="done")?"sp-done":list.some(t=>t.col==="inprogress"||t.col==="review")?"sp-prog":"sp-plan";
+    rows.push({name:m.name,owner:mostCommonOwner(list),status:groupStatus,start,end,col:m.col});
+    list.forEach(t=>{
+      const p=pos(new Date(t.due+"T00:00:00").getTime());
+      rows.push({name:"· "+t.title,owner:t.owner,status:colMap[t.col]||"sp-plan",start:Math.max(0,p-1.5),end:Math.min(100,p+1.5),col:m.col,sub:true});
+    });
+  });
+  return rows;
+}
+
+// Phase Milestones stepper — phase names are a fixed 4-stage taxonomy (matches
+// the Project "Current Phase" field), but status + dates are 100% computed
+// from the active project's real phase number and its tasks' real due dates.
+const PHASE_NAMES=["Phase 1: Kickoff & Scope","Phase 2: Deployment & Integration","Phase 3: Testing & UAT","Phase 4: Go-Live & Handover"];
+function computePhaseMilestones(){
+  const proj=getProject(activeProjectId);
+  const curPhase=proj?(parseInt(proj.phase)||1):1;
+  const scoped=proj?tasks.filter(t=>t.project===proj.id):[];
+  return PHASE_NAMES.map((name,i)=>{
+    const phaseNum=i+1;
+    let status="plan";
+    if(phaseNum<curPhase || (phaseNum===1 && proj && proj.phase1Complete)) status="done";
+    else if(phaseNum===curPhase) status="active";
+    let dates="—";
+    if(phaseNum===curPhase && scoped.length){
+      const withDue=scoped.filter(t=>t.due).map(t=>t.due).sort();
+      if(withDue.length) dates=fmtDateShort(withDue[0])+" – "+fmtDateShort(withDue[withDue.length-1]);
+    }
+    return {name,dates,status};
+  });
+}
+
+let projects=[];
+let projectInvites=[];
+let phase1Attachments=[];
+let activeProjectId="";
+
+let vendors=[];
+let assets=[];
+let risks=[];
+
+const sLabel={"sp-done":"Done","sp-prog":"In progress","sp-hold":"On hold","sp-plan":"Planned"};
+let roleOptions=[
+  {id:"admin", label:"Admin"},
+  {id:"lead",  label:"Lead"},
+  {id:"member",label:"Member"},
+  {id:"viewer",label:"Viewer"}
+];
+let domainOptions=["ALL","NET","SOC","EDR","IAM","VM","LOG"];
+const knowledgeArticles=[
+   {title:"Phase 1: Kickoff & Scope",icon:"ti-flag",tags:["phase 1","kickoff","scope","stakeholders"],view:"knowledge",summary:"Phase 1 foundation for MSSP onboarding, stakeholder alignment, scope confirmation, and success criteria.",steps:["Confirm client stakeholders and decision makers.","Validate in-scope sites, networks, systems, and services.","Document out-of-scope items and assumptions.","Agree on project timeline, reporting cadence, and escalation path."]},
+   {title:"Phase 1: Discovery & Requirements",icon:"ti-search",tags:["phase 1","discovery","requirements","assessment"],view:"knowledge",summary:"Collect technical and operational requirements needed before deployment planning.",steps:["Inventory existing firewalls, endpoints, identity systems, and log sources.","Document current monitoring, alerting, and incident response processes.","Capture compliance, reporting, and SLA requirements.","Identify gaps that Phase 2 deployment must address."]},
+   {title:"Phase 1: Governance & Reporting",icon:"ti-file-report",tags:["phase 1","governance","reporting","cadence"],view:"knowledge",summary:"Define governance structure, meeting cadence, and reporting expectations for the MSSP rollout.",steps:["Set weekly project status meeting schedule.","Define dashboard/report recipients and distribution method.","Agree on risk, issue, decision, and action item templates.","Confirm escalation contacts for blockers and security incidents."]},
+   {title:"Phase 1: Security Baseline Plan",icon:"ti-shield-check",tags:["phase 1","baseline","security","plan"],view:"knowledge",summary:"Create the baseline security plan that guides Phase 2 implementation.",steps:["Define firewall, endpoint, IAM, SIEM, and vulnerability management baselines.","Prioritize controls by risk and business impact.","Validate baseline requirements with client technical owners.","Convert approved controls into Phase 2 project tasks."]},
+   {title:"Phase 1: Client Onboarding Readiness",icon:"ti-user-check",tags:["phase 1","onboarding","readiness","uat"],view:"knowledge",summary:"Prepare the client for MSSP service onboarding and transition into deployment.",steps:["Confirm access requirements for MSSP teams.","Validate communication channels and support contacts.","Prepare onboarding checklist and readiness sign-off.","Capture client acceptance criteria before Phase 2 starts."]},
+   {title:"Phase 1: Approved Proposal Plan",icon:"ti-file-text",tags:["phase 1","approved proposal","proposal plan","attachment"],view:"knowledge",summary:"Attach and reference the approved Phase 1 proposal plan for kickoff, scope validation, governance, and baseline planning.",steps:["Upload the approved proposal plan in Phase 1 Attachments.","Confirm the plan version, approval date, and client scope.","Use it as the reference for Phase 1 deliverables.","Keep the attachment available for audit and project review meetings."]},
+   {title:"Phase 2: Deployment & Integration",icon:"ti-rocket",tags:["phase 2","deployment","integration","implementation"],view:"dashboard",summary:"Execute security tool deployment, integration workstreams, and client UAT validation.",steps:["Deploy security tools: firewall rules, EDR agents, SIEM log sources, IAM integrations.","Configure integration between tools for centralized visibility and response.","Conduct client UAT walkthroughs for each security domain.","Track deployment progress and resolve blockers in weekly status meetings."]},
+   {title:"Phase 3: Testing & UAT",icon:"ti-test-pipe",tags:["phase 3","testing","uat","validation"],view:"dashboard",summary:"Perform security testing, validate controls, and complete client user acceptance testing.",steps:["Execute penetration testing and vulnerability scans.","Validate SIEM correlation rules with sample events.","Run EDR policy simulations and tune exclusions.","Capture client UAT sign-offs for each security function."]},
+   {title:"Phase 4: Go-Live & Handover",icon:"ti-check-circle",tags:["phase 4","golive","handover","production"],view:"dashboard",summary:"Transition to production operations, handover to client, and establish ongoing support.",steps:["Execute go-live checklist: final configurations, monitoring, alerting.","Handover runbooks, playbooks, and documentation to client.","Establish support channels and escalation paths.","Close project with final report and lessons learned."]},
+   {title:"Dashboard",icon:"ti-layout-dashboard",tags:["overview","metrics","progress","workstream"],view:"dashboard",summary:"View deployment progress, workstream status, and recent activity.",steps:["Track overall task completion.","Review workstream owners and due dates.","Monitor recent project activity."]},
+   {title:"Projects",icon:"ti-briefcase",tags:["project","members","invites","tasks"],view:"projects",summary:"Create projects, assign members, invite members, and manage project tasks.",steps:["Create or edit a project from the Projects view.","Add existing members to a project.","Invite members with role and domain.","Create tasks assigned to the selected project."]},
+   {title:"Task Board",icon:"ti-layout-kanban",tags:["task","kanban","assign","stage","comment"],view:"kanban",summary:"Manage tasks by backlog, in progress, review, and done stages. Open a card to view details and leave comments for the team.",steps:["Use filters by domain.","Create tasks from the top bar or project view.","Click a task card to view details and post comments.","Assign tasks to members and projects.","Track due dates and task ownership."]},
+   {title:"Timeline",icon:"ti-chart-gantt",tags:["gantt","timeline","schedule"],view:"gantt",summary:"Review deployment timeline bars and workstream schedule.",steps:["Check workstream start and end dates.","Review subtasks and dependencies.","Use the timeline for status meetings."]},
+   {title:"Asset Registry",icon:"ti-server",tags:["asset","tool","deployment"],view:"assets",summary:"Add, edit, and delete deployed security tools and their progress. Synced to Google Sheets.",steps:["Open Asset Registry.","Use New Asset to add a tool.","Edit asset progress, details, and status label.","Delete assets that are no longer deployed."]},
+   {title:"Risk Register",icon:"ti-alert-triangle",tags:["risk","mitigation","owner"],view:"risks",summary:"Track project risks, likelihood, impact, owners, and mitigations. Fully editable and synced to Google Sheets.",steps:["Use New Risk to log a risk with category, likelihood, impact, and level.","Review risk level and owner.","Update mitigation plans as work progresses.","Use risk data in weekly project reviews."]},
+   {title:"Team Members",icon:"ti-users",tags:["member","role","domain","invite"],view:"members",summary:"Manage members, roles, domains, and pending invitations.",steps:["Invite a new member with role and domain.","Edit member role and domain from member cards.","Assign tasks to members from the team view.","Review pending invitations."]},
+   {title:"Admin Settings",icon:"ti-settings",tags:["admin","role management","domain management"],view:"settings",summary:"Admin-only area for managing role/domain options and member assignments.",steps:["Open Settings while signed in as an Admin-role member.","Add or remove unused roles.","Add or remove unused domains.","Edit member role and domain assignments."]},
+   {title:"Google Sheets Sync",icon:"ti-cloud",tags:["sync","google sheets","backup","auto refresh","google sites","embed"],view:"dashboard",summary:"Connect the app to a Google Apps Script Web App for cloud backup, and optionally embed it directly in Google Sites. The dashboard auto-refreshes from Sheets every 20 seconds.",steps:["Deploy the Apps Script from the setup screen (Code.gs + an Index.html file with this app's content).","Use the /exec URL, not /dev.","Set Execute as Me and access Anyone.","Use Force sync to save changes immediately.","The app polls Google Sheets automatically so the dashboard reflects other users' changes.","To embed in Google Sites, paste the same /exec URL into Insert → Embed → By URL."]},
+   {title:"Vendor Management",icon:"ti-receipt",tags:["vendor","license","renewal","activation"],view:"vendors",summary:"Track vendor licenses, renewal dates, and support levels.",steps:["Add vendors with license expiration dates.","Monitor license expiry warnings (30+ days left = green, less = amber, expired = red).","Track support levels and contact information.","Use for license activation and renewal planning."]}
+ ];
+function roleLabel(id){ const r=roleOptions.find(r=>r.id===id); return r?r.label:id; }
+function domainClass(d){ return d==="ALL"?"SOC":d; }
+
+// ══════════════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════════════
+function getM(id){ return members.find(m=>m.id===id); }
+
+function avHTML(id,sz){
+  const m=getM(id)||{color:"#B5D4F4",textColor:"#0C447C",initials:id};
+  const s=sz||24;
+  return `<div class="av" style="width:${s}px;height:${s}px;background:${m.color};color:${m.textColor};font-size:${Math.round(s*.38)}px">${m.initials}</div>`;
+}
+
+function esc(s){
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c]));
+}
+
+function toast(msg,type){
+  const el=document.getElementById("toast"),ic=document.getElementById("ti"),ms=document.getElementById("tm");
+  ic.className="ti "+(type==="warn"?"ti-alert-triangle":type==="err"?"ti-x":"ti-check");
+  ms.textContent=msg;
+  el.classList.add("show");
+  clearTimeout(el._t);
+  el._t=setTimeout(()=>el.classList.remove("show"),3000);
+}
+
+function fillOwnerSel(id){
+  const s=document.getElementById(id); s.innerHTML="";
+  members.forEach(m=>{ const o=document.createElement("option"); o.value=m.id; o.textContent=m.name+" ("+roleLabel(m.role)+")"; s.appendChild(o); });
+}
+
+function populateInviteOptions(){
+  const roleSel=document.getElementById("in-role");
+  const domainSel=document.getElementById("in-domain");
+  if(roleSel)roleSel.innerHTML=roleOptions.map(r=>`<option value="${esc(r.id)}">${esc(r.label)}</option>`).join("");
+  if(domainSel)domainSel.innerHTML=domainOptions.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("");
+}
+
+// ══════════════════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════════════════
+function fmtDate(iso){
+  if(!iso)return "TBD";
+  const d=new Date(iso+"T00:00:00");
+  if(isNaN(d))return iso;
+  return d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+}
+function fmtDateShort(iso){
+  if(!iso)return "TBD";
+  const d=new Date(iso+"T00:00:00");
+  if(isNaN(d))return iso;
+  return d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+}
+
+function updateMetrics(){
+  const scoped=activeProjectId?tasks.filter(t=>t.project===activeProjectId):tasks;
+  const done=scoped.filter(t=>t.col==="done").length, total=scoped.length;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById("m-pct").textContent=pct+"%";
+  document.getElementById("m-bar").style.width=pct+"%";
+  document.getElementById("m-sub").textContent=total?(done+" of "+total+" tasks complete"):"No tasks yet";
+  const rTotal=risks.length, rH=risks.filter(r=>r.level==="rl-h").length, rM=risks.filter(r=>r.level==="rl-m").length;
+  const mRisks=document.getElementById("m-risks"); if(mRisks)mRisks.textContent=rTotal;
+  const mRiskChips=document.getElementById("m-risks-chips");
+  if(mRiskChips)mRiskChips.innerHTML=rTotal?`<span class="chip chip-red">${rH} critical</span><span class="chip chip-amber">${rM} medium</span>`:`<span class="chip chip-muted">None logged</span>`;
+  const riskCount=document.getElementById("risk-count"); if(riskCount)riskCount.textContent=rH+" critical";
+
+  // Active Deployments — distinct domain workstreams with at least one task,
+  // split into on-track vs at-risk (has an incomplete task overdue today)
+  const ws=computeWorkstreams();
+  const today=new Date(); today.setHours(0,0,0,0);
+  let atRisk=0;
+  ws.forEach(w=>{ if(w.overdue)atRisk++; });
+  const mDeploys=document.getElementById("m-deploys"); if(mDeploys)mDeploys.textContent=ws.length;
+  const mDeploysChips=document.getElementById("m-deploys-chips");
+  if(mDeploysChips)mDeploysChips.innerHTML=ws.length?`<span class="chip chip-blue">${ws.length-atRisk} on track</span>${atRisk?`<span class="chip chip-amber">${atRisk} at risk</span>`:""}`:`<span class="chip chip-muted">No workstreams yet</span>`;
+
+  // Next Deadline — earliest due date among incomplete tasks in scope
+  const upcoming=scoped.filter(t=>t.col!=="done"&&t.due).slice().sort((a,b)=>String(a.due).localeCompare(String(b.due)));
+  const mDeadline=document.getElementById("m-deadline");
+  const mDeadlineChips=document.getElementById("m-deadline-chips");
+  if(upcoming.length){
+    const next=new Date(upcoming[0].due+"T00:00:00");
+    const daysLeft=Math.round((next-today)/(1000*60*60*24));
+    if(mDeadline)mDeadline.textContent=daysLeft<0?"Overdue":daysLeft;
+    if(mDeadlineChips)mDeadlineChips.innerHTML=`<span class="chip ${daysLeft<0?"chip-red":daysLeft<=3?"chip-amber":"chip-green"}">${fmtDateShort(upcoming[0].due)}</span>`;
+  }else{
+    if(mDeadline)mDeadline.textContent="—";
+    if(mDeadlineChips)mDeadlineChips.innerHTML=`<span class="chip chip-muted">No upcoming due dates</span>`;
+  }
+}
+
+function renderDashboard(){
+   updateMetrics();
+   const tb=document.getElementById("ws-body"); tb.innerHTML="";
+   const ws=computeWorkstreams();
+   if(!ws.length){
+     tb.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--ink-400);padding:20px">No tasks yet — add tasks to see workstream progress.</td></tr>`;
+   } else {
+     ws.forEach(w=>{
+       const tr=document.createElement("tr");
+       tr.innerHTML=`<td style="font-weight:500">${w.name}</td>
+         <td style="text-align:center">${avHTML(w.owner,24)}</td>
+         <td style="min-width:150px"><div class="pbar"><div class="pfill ${w.col}" style="width:${w.pct}%"></div></div>
+           <div style="font-size:11px;color:var(--ink-400);text-align:right;margin-top:3px">${w.pct}%</div></td>
+         <td><span class="spill ${w.status}">${sLabel[w.status]}</span></td>
+         <td style="font-size:12px;color:var(--ink-600)">${w.due}</td>`;
+       tb.appendChild(tr);
+     });
+   }
+   const ms=document.getElementById("phase-milestones"); ms.innerHTML="";
+   const activeProject=getProject(activeProjectId);
+   if(!activeProject){
+     ms.innerHTML=`<div class="info-msg"><i class="ti ti-info-circle" style="font-size:14px;flex-shrink:0"></i><span>No project selected yet — create a project to track phase milestones.</span></div>`;
+   } else {
+     computePhaseMilestones().forEach(m=>{
+       const div=document.createElement("div");
+       div.className="mstone "+m.status;
+       div.innerHTML=`<div class="m-dot"></div>
+         <div class="m-name">${m.name}</div>
+         <div class="m-date">${m.dates}</div>
+         <div class="m-desc">${m.status==="done"?"Completed":m.status==="active"?"In progress":"Pending"}</div>`;
+       ms.appendChild(div);
+     });
+   }
+   const summary=document.getElementById("phase-milestone-summary");
+   if(summary){
+     summary.textContent=activeProject?`Phase ${activeProject.phase||1} active`:"No project";
+   }
+   const feed=document.getElementById("act-feed"); feed.innerHTML="";
+   if(!activities.length){
+     feed.innerHTML=`<div style="text-align:center;color:var(--ink-400);font-size:12px;padding:8px 0">No activity yet — actions you take will show up here.</div>`;
+   } else {
+     activities.slice(0,6).forEach(a=>{
+       const d=document.createElement("div"); d.className="act-item";
+       d.innerHTML=`<div class="act-dot" style="background:${a.bg}"><i class="ti ${a.icon}" style="font-size:13px;color:${a.color}"></i></div>
+         <span style="flex:1;font-size:13px;color:var(--ink-900)">${a.text}</span>
+         <span style="font-size:11px;color:var(--ink-400);white-space:nowrap">${a.time}</span>`;
+       feed.appendChild(d);
+     });
+   }
+   const sel=document.getElementById("db-project-select");
+   if(sel){
+     sel.innerHTML=projects.length?projects.map(p=>`<option value="${p.id}" ${p.id===activeProjectId?"selected":""}>${esc(p.name)} (Phase ${p.phase||1})</option>`).join(""):`<option value="">No projects yet</option>`;
+   }
+   const sbActive=document.getElementById("sb-active-project");
+   if(sbActive) sbActive.textContent=activeProject?esc(activeProject.name):"Security Services PM";
+   const sbPhase=document.getElementById("sb-phase");
+   if(sbPhase){
+     if(activeProject){
+       const phaseNum=parseInt(activeProject.phase)||1;
+       sbPhase.innerHTML=`<strong>Phase ${phaseNum} of 4</strong><br>${esc(PHASE_NAMES[phaseNum-1]?PHASE_NAMES[phaseNum-1].split(": ")[1]:"")}`;
+     } else {
+       sbPhase.textContent="No active project";
+     }
+   }
+ }
+
+function switchToProject(id){
+  activeProjectId=id;
+  afterDataChange(true);
+  renderDashboard();
+  renderProjects();
+ }
+
+let activeFilter="all";
+
+function taskCommentCount(tid){ return taskComments.filter(c=>c.taskId===tid).length; }
+
+function renderKanban(filter){
+  activeFilter=filter;
+  const board=document.getElementById("kanban-board"); board.innerHTML="";
+  const cols=["backlog","inprogress","review","done"];
+  const cLabel={backlog:"Backlog",inprogress:"In Progress",review:"Review",done:"Done"};
+  cols.forEach(c=>{
+    const filtered=tasks.filter(t=>t.col===c&&(filter==="all"||t.tag===filter));
+    const ce=document.createElement("div"); ce.className="kol";
+    ce.innerHTML=`<div class="kol-head">${cLabel[c]}<span class="kol-cnt">${filtered.length}</span></div><div class="kol-body"></div>`;
+    const body=ce.querySelector(".kol-body");
+    filtered.forEach(t=>{
+      const canEdit=currentUser&&(currentUser.role==="admin"||currentUser.role==="lead"||currentUser.id===t.owner);
+      const cCount=taskCommentCount(t.id);
+      const card=document.createElement("div"); card.className="task-card";
+      card.onclick=()=>openTaskDetail(t.id);
+      card.innerHTML=`<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:7px">
+          <div class="pri-dot pd-${t.pri}" style="margin-top:5px;flex-shrink:0"></div>
+          <div class="t-title">${esc(t.title)}</div></div>
+        <div class="t-meta">
+          <span class="dtag dtag-${t.tag}">${t.tag}</span>
+          <span class="chip chip-muted">${esc(projectName(t.project))}</span>
+          <span class="due-lbl"><i class="ti ti-calendar" style="font-size:10px"></i>${esc(fmtDateShort(t.due))}</span>
+          <span class="cmt-count"><i class="ti ti-message-circle" style="font-size:11px"></i>${cCount}</span>
+          <div style="display:flex;align-items:center;gap:4px;margin-left:auto">
+            ${avHTML(t.owner,22)}
+            ${canEdit?`<button class="btn btn-xs btn-ghost" onclick="openAssignModal(${t.id},event)" title="Reassign"><i class="ti ti-pencil" style="font-size:11px"></i></button>`:""}
+          </div>
+        </div>`;
+      body.appendChild(card);
+    });
+    board.appendChild(ce);
+  });
+}
+
+function filterK(f,btn){ document.querySelectorAll(".fb").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); renderKanban(f); }
+
+function renderGantt(){
+  const tb=document.getElementById("gantt-body"); tb.innerHTML="";
+  const rows=computeGanttRows();
+  if(!rows.length){
+    tb.innerHTML=`<tr><td colspan="4" style="text-align:center;color:var(--ink-400);padding:20px">No tasks with due dates yet — add tasks to populate the timeline.</td></tr>`;
+    return;
+  }
+  rows.forEach(r=>{
+    const tr=document.createElement("tr");
+    const lp=r.start.toFixed(1), wp=(r.end-r.start).toFixed(1);
+    tr.innerHTML=`<td style="font-size:${r.sub?"12px":"13px"};color:${r.sub?"var(--ink-600)":"var(--ink-900)"};font-weight:${r.sub?400:600};padding-left:${r.sub?"22px":"12px"}">${esc(r.name)}</td>
+      <td style="text-align:center">${avHTML(r.owner,22)}</td>
+      <td><span class="spill ${r.status}">${sLabel[r.status]}</span></td>
+      <td><div class="gbar-bg"><div class="gbar ${r.col}" style="left:${lp}%;width:${wp}%"></div></div></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function renderAssets(){
+  const grid=document.getElementById("asset-grid"); grid.innerHTML="";
+  const count=document.getElementById("asset-count");
+  if(count)count.textContent=assets.length+" asset"+(assets.length===1?"":"s");
+  if(!assets.length){
+    grid.innerHTML=`<div class="info-msg" style="grid-column:1/-1"><i class="ti ti-info-circle" style="font-size:14px;flex-shrink:0"></i><span>No assets yet. Add the first deployed security tool.</span></div>`;
+    return;
+  }
+  assets.forEach(a=>{
+    const card=document.createElement("div"); card.className="asset-card";
+    card.innerHTML=`<div class="ai-wrap"><i class="ti ${esc(a.icon)}" style="color:${esc(a.ic)}"></i></div>
+      <div class="a-name">${esc(a.name)}</div>
+      <div class="a-detail">${esc(a.detail).replace(/\n/g,"<br>")}</div>
+      <div class="pbar"><div class="pfill ${esc(a.col)}" style="width:${Number(a.pct)||0}%"></div></div>
+      <div class="a-prog-lbl"><span>${esc(a.label)}</span><span>${Number(a.pct)||0}%</span></div>
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:10px">
+        <button class="btn btn-xs" onclick="openAssetModal('${esc(a.id)}',event)"><i class="ti ti-pencil" style="font-size:11px"></i> Edit</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteAsset('${esc(a.id)}',event)"><i class="ti ti-trash" style="font-size:11px"></i> Delete</button>
+      </div>`;
+grid.appendChild(card);
+   });
+ }
+
+ function renderVendors(){
+   const grid=document.getElementById("vendors-grid");
+   const count=document.getElementById("vendor-count");
+   if(count)count.textContent=vendors.length+" vendor"+(vendors.length===1?"":"s");
+   if(!vendors.length){
+     grid.innerHTML=`<div class="info-msg" style="grid-column:1/-1"><i class="ti ti-info-circle" style="font-size:14px;flex-shrink:0"></i><span>No vendors yet. Add your first vendor for license tracking.</span></div>`;
+     return;
+   }
+   const today=new Date(); today.setHours(0,0,0,0);
+   vendors.forEach(v=>{
+     const end=new Date(v.licenseEnd); end.setHours(0,0,0,0);
+     const daysLeft=Math.ceil((end-today)/(1000*60*60*24));
+     const statusClass=daysLeft<0?"license-expired":daysLeft<30?"license-warning":"license-active";
+     const card=document.createElement("div"); card.className="vendor-card";
+     card.innerHTML=`<div class="vi-wrap"><i class="ti ti-receipt" style="color:var(--accent)"></i></div>
+       <div class="v-name">${esc(v.name)}</div>
+       <div class="v-detail"><strong>${esc(v.contact)}</strong><br>${esc(v.email)}</div>
+       <div class="v-detail" style="margin-top:8px"><span class="chip chip-muted">${esc(v.support)}</span></div>
+       <div class="v-license-lbl"><span>License expires</span><span class="${statusClass}">${v.licenseEnd} (${daysLeft<0?"Expired":daysLeft+" days left"})</span></div>
+       <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:10px">
+         <button class="btn btn-xs" onclick="openVendorModal('${esc(v.id)}',event)"><i class="ti ti-pencil" style="font-size:11px"></i> Edit</button>
+         <button class="btn btn-danger btn-xs" onclick="deleteVendor('${esc(v.id)}',event)"><i class="ti ti-trash" style="font-size:11px"></i> Delete</button>
+       </div>`;
+     grid.appendChild(card);
+   });
+ }
+
+ function renderRisks(){
+  const tb=document.getElementById("risk-body"); tb.innerHTML="";
+  const count=document.getElementById("risk-count");
+  if(count)count.textContent=risks.filter(r=>r.level==="rl-h").length+" critical";
+  if(!risks.length){
+    tb.innerHTML=`<tr><td colspan="8" style="text-align:center;color:var(--ink-400);padding:20px">No risks logged yet.</td></tr>`;
+    return;
+  }
+  risks.forEach(r=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td style="line-height:1.45">${esc(r.risk)}</td>
+      <td><span class="chip chip-muted" style="white-space:nowrap">${esc(r.cat)}</span></td>
+      <td style="font-size:12px;color:var(--ink-600)">${esc(r.like)}</td>
+      <td style="font-size:12px;color:var(--ink-600)">${esc(r.impact)}</td>
+      <td><span class="rl ${r.level}">${r.level==="rl-h"?"High":r.level==="rl-m"?"Medium":"Low"}</span></td>
+      <td><span class="op">${esc(getM(r.owner)?getM(r.owner).initials:r.owner)}</span></td>
+      <td style="font-size:12px;color:var(--ink-600);line-height:1.45">${esc(r.mit)}</td>
+      <td><div style="display:flex;gap:6px"><button class="btn btn-xs" onclick="openRiskModal('${esc(r.id)}',event)"><i class="ti ti-pencil" style="font-size:11px"></i></button><button class="btn btn-danger btn-xs" onclick="deleteRisk('${esc(r.id)}',event)"><i class="ti ti-trash" style="font-size:11px"></i></button></div></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function renderMembers(){
+  const grid=document.getElementById("mem-grid"); grid.innerHTML="";
+  const isAdmin=currentUser&&(currentUser.role==="admin"||currentUser.role==="lead");
+  members.forEach(m=>{
+    const mt=tasks.filter(t=>t.owner===m.id);
+    const open=mt.filter(t=>t.col!=="done").length, done=mt.filter(t=>t.col==="done").length;
+    const rcls={admin:"rb-admin",lead:"rb-lead",member:"rb-member",viewer:"rb-viewer"}[m.role]||"rb-member";
+    const card=document.createElement("div"); card.className="mem-card";
+    card.innerHTML=`<div class="mem-top">${avHTML(m.id,38)}<div class="mem-info"><div class="mem-name">${esc(m.name)}</div><div class="mem-email">${esc(m.email)}</div></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <span class="role-badge ${rcls}">${esc(roleLabel(m.role))}</span>
+        <span class="dtag dtag-${domainClass(m.domain)}">${esc(m.domain)}</span>
+      </div>
+      <div class="stat-row"><div class="stat"><span class="stat-n">${mt.length}</span><span class="stat-l">Total</span></div>
+        <div class="stat"><span class="stat-n">${open}</span><span class="stat-l">Open</span></div>
+        <div class="stat"><span class="stat-n">${done}</span><span class="stat-l">Done</span></div></div>
+       ${isAdmin&&m.id!==currentUser.id?`
+       <div class="mem-actions">
+         <select class="role-sel" onchange="changeRole('${m.id}',this.value)">
+           ${roleOptions.map(r=>`<option value="${esc(r.id)}" ${m.role===r.id?"selected":""}>${esc(r.label)}</option>`).join("")}
+         </select>
+         <select class="role-sel" onchange="changeDomain('${m.id}',this.value)">
+           ${domainOptions.map(d=>`<option value="${d}" ${m.domain===d?"selected":""}>${d}</option>`).join("")}
+         </select>
+         <button class="btn btn-sm" onclick="prefillAssignForMember('${m.id}')"><i class="ti ti-list-check" style="font-size:12px"></i> Assign</button>
+         <button class="btn btn-sm" onclick="openMemberModal('${m.id}')"><i class="ti ti-pencil" style="font-size:12px"></i> Edit</button>
+         <button class="btn btn-sm btn-danger" onclick="deleteMember('${m.id}',event)"><i class="ti ti-trash" style="font-size:12px"></i> Delete</button>
+       </div>`:`<div style="font-size:11px;color:var(--ink-400)"><i class="ti ti-lock" style="font-size:11px"></i> Current session</div>`}`;
+    grid.appendChild(card);
+  });
+  const tb=document.getElementById("inv-body"); tb.innerHTML="";
+   if(!invites.length){ tb.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--ink-400);padding:20px">No pending invitations</td></tr>`; return; }
+   invites.forEach(inv=>{
+     const tr=document.createElement("tr"); const rcls={admin:"rb-admin",lead:"rb-lead",member:"rb-member",viewer:"rb-viewer"}[inv.role];
+     tr.innerHTML=`<td>${inv.email}</td><td><span class="role-badge ${rcls}">${inv.role}</span></td>
+       <td style="font-size:12px">${inv.invitedBy}</td><td style="font-size:12px;color:var(--ink-400)">${inv.date}</td>
+       <td><span class="chip chip-amber">Pending</span></td>
+       <td><div style="display:flex;gap:6px"><button class="btn btn-xs" onclick="resendInvite('${inv.id}')"><i class="ti ti-mail" style="font-size:11px"></i> Resend</button><button class="btn btn-danger btn-xs" onclick="revokeInvite('${inv.id}')"><i class="ti ti-x" style="font-size:11px"></i> Revoke</button></div></td>`;
+     tb.appendChild(tr);
+  });
+}
+
+function renderSettings(){
+  const isAdmin=currentUser&&currentUser.role==="admin";
+  const memberBody=document.getElementById("settings-members-body");
+  const roleBody=document.getElementById("settings-roles-body");
+  const domainBody=document.getElementById("settings-domains-body");
+  if(memberBody)memberBody.innerHTML="";
+  if(roleBody)roleBody.innerHTML="";
+  if(domainBody)domainBody.innerHTML="";
+  if(!isAdmin){
+    const msg=`<tr><td colspan="6" style="text-align:center;color:var(--ink-400);padding:24px">Admin access required.</td></tr>`;
+    if(memberBody)memberBody.innerHTML=msg;
+    if(roleBody)roleBody.innerHTML=msg.replace('colspan="6"','colspan="3"');
+    if(domainBody)domainBody.innerHTML=msg.replace('colspan="6"','colspan="3"');
+    return;
+  }
+  members.forEach(m=>{
+    const mt=tasks.filter(t=>t.owner===m.id);
+    const open=mt.filter(t=>t.col!=="done").length, done=mt.filter(t=>t.col==="done").length;
+    const rcls={admin:"rb-admin",lead:"rb-lead",member:"rb-member",viewer:"rb-viewer"}[m.role]||"rb-member";
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td><div style="display:flex;align-items:center;gap:10px">${avHTML(m.id,28)}<div><div style="font-weight:600">${esc(m.name)}</div><div style="font-size:11px;color:var(--ink-400)">${esc(m.email)}</div></div></div></td>
+      <td><span class="role-badge ${rcls}">${esc(roleLabel(m.role))}</span></td>
+      <td><select class="role-sel" onchange="changeRole('${m.id}',this.value)">
+        ${roleOptions.map(r=>`<option value="${esc(r.id)}" ${m.role===r.id?"selected":""}>${esc(r.label)}</option>`).join("")}
+      </select></td>
+      <td><select class="role-sel" onchange="changeDomain('${m.id}',this.value)">
+        ${domainOptions.map(d=>`<option value="${esc(d)}" ${m.domain===d?"selected":""}>${esc(d)}</option>`).join("")}
+      </select></td>
+      <td style="text-align:center">${open}</td>
+      <td style="text-align:center">${done}</td>`;
+    memberBody.appendChild(tr);
+  });
+  roleOptions.forEach(r=>{
+    const count=members.filter(m=>m.role===r.id).length;
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td><strong>${esc(r.label)}</strong><div style="font-size:11px;color:var(--ink-400)">${esc(r.id)}</div></td>
+      <td style="text-align:center">${count}</td>
+      <td><button class="btn btn-danger btn-xs" onclick="removeRole('${esc(r.id)}')"><i class="ti ti-trash" style="font-size:11px"></i> Remove</button></td>`;
+    roleBody.appendChild(tr);
+  });
+  domainOptions.forEach(d=>{
+    const count=members.filter(m=>m.domain===d).length;
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td><strong>${esc(d)}</strong></td>
+      <td style="text-align:center">${count}</td>
+      <td><button class="btn btn-danger btn-xs" onclick="removeDomain('${esc(d)}')"><i class="ti ti-trash" style="font-size:11px"></i> Remove</button></td>`;
+    domainBody.appendChild(tr);
+  });
+}
+
+function projectName(id){ const p=projects.find(p=>p.id===id); return p?p.name:"Unassigned"; }
+function getProject(id){ return projects.find(p=>p.id===id) || projects[0]; }
+
+function renderKnowledgeBase(){
+  const grid=document.getElementById("kb-grid");
+  const count=document.getElementById("kb-count");
+  const query=(document.getElementById("kb-search")?.value||"").toLowerCase();
+  if(count)count.textContent=knowledgeArticles.length+" articles";
+  renderPhase1Attachments();
+  if(!grid)return;
+  grid.innerHTML="";
+  const filtered=knowledgeArticles.filter(a=>[a.title,a.summary,a.view,...(a.tags||[])].join(" ").toLowerCase().includes(query));
+  if(!filtered.length){
+    grid.innerHTML=`<div class="info-msg" style="grid-column:1/-1"><i class="ti ti-info-circle" style="font-size:14px;flex-shrink:0"></i><span>No knowledge base articles found.</span></div>`;
+    return;
+  }
+  filtered.forEach(a=>{
+    const card=document.createElement("div"); card.className="card card-pad";
+    card.innerHTML=`<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px">
+      <div class="ai-wrap" style="width:42px;height:42px;margin-bottom:0"><i class="ti ${esc(a.icon)}" style="font-size:20px;color:var(--accent)"></i></div>
+      <div style="flex:1;min-width:0"><div style="font-weight:700">${esc(a.title)}</div><div style="font-size:11px;color:var(--ink-400);margin-top:2px">${esc(a.view)}</div></div>
+    </div>
+    <div style="font-size:13px;color:var(--ink-700);line-height:1.6;margin-bottom:12px">${esc(a.summary)}</div>
+    <div class="chips" style="margin-bottom:12px">${(a.tags||[]).slice(0,4).map(t=>`<span class="chip chip-muted">${esc(t)}</span>`).join("")}</div>
+    <ol style="font-size:12px;color:var(--ink-600);line-height:1.7;margin:0 0 14px 18px;padding:0">${(a.steps||[]).map(s=>`<li>${esc(s)}</li>`).join("")}</ol>
+    <button class="btn btn-sm" onclick="openKnowledgeView('${esc(a.view)}')"><i class="ti ti-arrow-right" style="font-size:12px"></i> Open</button>`;
+    grid.appendChild(card);
+  });
+}
+
+function openKnowledgeView(view){
+  const item=document.querySelector(`.sb-item[onclick="switchView('${view}',this)"]`);
+  if(item)switchView(view,item); else document.getElementById(`view-${view}`)?.classList.add("active");
+}
+
+const PHASE1_ATTACH_KEY="mssp_phase1_attachments";
+function getPhase1Attachments(){
+  try { return JSON.parse(localStorage.getItem(PHASE1_ATTACH_KEY)||"[]"); } catch(e) { return []; }
+}
+function savePhase1Attachments(list){ localStorage.setItem(PHASE1_ATTACH_KEY,JSON.stringify(list)); }
+function getProjectPhase1Attachments(projectId){ return phase1Attachments.filter(a=>a.projectId===projectId); }
+function replaceProjectPhase1Attachment(attachment){
+   phase1Attachments=[...phase1Attachments.filter(a=>a.id!==attachment.id), {...attachment,size:parseInt(attachment.size)||0}];
+   savePhase1Attachments(phase1Attachments);
+ }
+function removeProjectPhase1Attachment(id){
+  phase1Attachments=phase1Attachments.filter(a=>a.id!==id);
+  savePhase1Attachments(phase1Attachments);
+}
+function formatBytes(bytes){
+  if(!bytes)return "0 B";
+  const units=["B","KB","MB","GB"]; let size=bytes, i=0;
+  while(size>=1024&&i<units.length-1){size/=1024;i++;}
+  return size.toFixed(i?1:0)+" "+units[i];
+}
+function renderPhase1Attachments(){
+  const listEl=document.getElementById("phase1-attachment-list");
+  const label=document.getElementById("phase1-project-label");
+  const p=getProject(activeProjectId);
+  if(label)label.textContent=p?p.name:"Current Project";
+  if(!listEl)return;
+  const list=getProjectPhase1Attachments(activeProjectId);
+  if(!list.length){
+    listEl.innerHTML=`<div style="font-size:12px;color:var(--ink-400)">No approved proposal plan attached to ${esc(p?p.name:"this project")} yet.</div>`;
+    return;
+  }
+  listEl.innerHTML="";
+  list.forEach(a=>{
+    const item=document.createElement("div");
+    item.style.cssText="border:1px solid var(--ink-200);border-radius:var(--radius);padding:10px 12px;margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap";
+    const downloadUrl=a.driveUrl||a.dataUrl;
+    item.innerHTML=`<div style="min-width:0"><div style="font-weight:600">${esc(a.name)}</div><div style="font-size:11px;color:var(--ink-400)">Attached ${esc(a.date)} · ${formatBytes(a.size)} · Drive folder: ${esc(a.folderName||"")}</div></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        ${downloadUrl?`<a class="btn btn-xs" href="${esc(downloadUrl)}" target="_blank" rel="noopener"><i class="ti ti-download" style="font-size:11px"></i> Open</a>`:""}
+        <button class="btn btn-danger btn-xs" onclick="removePhase1Attachment('${esc(a.id)}')"><i class="ti ti-trash" style="font-size:11px"></i> Remove</button>
+      </div>`;
+    listEl.appendChild(item);
+  });
+}
+function attachPhase1File(){
+  const input=document.getElementById("phase1-file");
+  const file=input&&input.files?input.files[0]:null;
+  const p=getProject(activeProjectId);
+  if(!p){alert("Select a project first.");return;}
+  if(!file){alert("Choose a proposal plan file first.");return;}
+  if(file.size>5*1024*1024){alert("File is larger than 5 MB. Please use a smaller PDF or document.");return;}
+  const reader=new FileReader();
+reader.onload=async function(){
+     const attachment={id:"ph1_"+Date.now(),projectId:p.id,projectName:p.name,name:file.name,type:file.type||"application/octet-stream",size:file.size,date:new Date().toLocaleString(),uploadedBy:currentUser?currentUser.email:"Local",dataUrl:reader.result};
+     const list=[...getProjectPhase1Attachments(p.id), attachment];
+     phase1Attachments=[...phase1Attachments.filter(a=>a.projectId!==p.id), ...list];
+     savePhase1Attachments(phase1Attachments);
+     input.value="";
+     if(cloudMode){
+       try {
+         setSyncPill("busy");
+         const saved=await gsSavePhase1Attachment(attachment);
+         replaceProjectPhase1Attachment(saved);
+         setSyncPill("ok");
+         toast("Proposal plan uploaded to Drive");
+       } catch(e) {
+         setSyncPill("err");
+         toast("Saved locally; Drive upload failed: "+e.message,"warn");
+       }
+     } else {
+       toast("Phase 1 proposal plan attached locally");
+     }
+     renderPhase1Attachments();
+   };
+  reader.onerror=function(){ toast("Unable to read file","err"); };
+  reader.readAsDataURL(file);
+}
+async function removePhase1Attachment(id){
+  if(!confirm("Remove this Phase 1 attachment?"))return;
+  const a=phase1Attachments.find(x=>x.id===id);
+  phase1Attachments=phase1Attachments.filter(x=>x.id!==id);
+  savePhase1Attachments(phase1Attachments);
+  if(cloudMode && a && a.driveFileId){
+    try {
+      setSyncPill("busy");
+      await gsDeletePhase1Attachment(id);
+      setSyncPill("ok");
+      toast("Proposal plan removed from Drive");
+    } catch(e) {
+      setSyncPill("err");
+      toast("Removed locally; Drive delete failed: "+e.message,"warn");
+    }
+  } else {
+    toast("Phase 1 attachment removed");
+  }
+  renderPhase1Attachments();
+}
+
+ function uploadPhase1File(){
+   const input=document.getElementById("project-phase1-file");
+   const file=input&&input.files?input.files[0]:null;
+   const p=getProject(activeProjectId);
+   if(!p){alert("Select a project first.");return;}
+   if(!file){alert("Choose a Phase 1 attachment file first.");return;}
+   if(file.size>5*1024*1024){alert("File is larger than 5 MB. Please use a smaller PDF or document.");return;}
+   const reader=new FileReader();
+   reader.onload=async function(){
+     const attachment={id:"ph1_"+Date.now(),projectId:p.id,projectName:p.name,name:file.name,type:file.type||"application/octet-stream",size:file.size,date:new Date().toLocaleString(),uploadedBy:currentUser?currentUser.email:"Local",dataUrl:reader.result};
+     phase1Attachments=[...phase1Attachments.filter(a=>a.projectId!==p.id), attachment];
+     savePhase1Attachments(phase1Attachments);
+     p.phase1Complete=true;
+     input.value="";
+     renderPhase1Attachments();
+     renderProjectPhase1(p);
+     toast("Phase 1 attachment uploaded");
+     afterDataChange();
+   };
+   reader.onerror=function(){ toast("Unable to read file","err"); };
+   reader.readAsDataURL(file);
+ }
+
+ function renderProjectPhase1(p){
+   const status=document.getElementById("phase1-status");
+   const preview=document.getElementById("phase1-preview");
+   if(status) status.textContent=p.phase1Complete?"Phase 1 complete":"Not attached";
+   if(preview && p.phase1Complete){
+     const att=phase1Attachments.find(a=>a.projectId===p.id);
+     if(att){
+       preview.innerHTML=`<div style="border:1px solid var(--ink-200);border-radius:var(--radius);padding:10px 12px;margin-top:10px"><div style="font-weight:600">${esc(att.name)}</div><div style="font-size:11px;color:var(--ink-400)">${formatBytes(att.size)} · ${esc(att.date)}</div></div>`;
+     }else{
+       preview.innerHTML="";
+     }
+   }
+ }
+
+function populateProjectSelect(id){
+  const s=document.getElementById(id);
+  if(!s)return;
+  s.innerHTML=projects.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");
+  if(projects.some(p=>p.id===activeProjectId))s.value=activeProjectId;
+}
+
+function openProjectModal(id){
+   const p=id?getProject(id):null;
+   fillOwnerSel("project-owner");
+   document.getElementById("project-modal-title").innerHTML=`<i class="ti ti-briefcase" style="font-size:16px;color:var(--accent)"></i> ${p?"Edit Project":"New Project"}`;
+   document.getElementById("project-id").value=p?p.id:"";
+   document.getElementById("project-name").value=p?p.name:"";
+   document.getElementById("project-description").value=p?p.description:"";
+   document.getElementById("project-phase").value=p?p.phase||2:2;
+   document.getElementById("project-owner").value=p?p.owner:(currentUser?currentUser.id:(members[0]?members[0].id:""));
+   openModal("project");
+ }
+
+function saveProject(){
+   const name=document.getElementById("project-name").value.trim();
+   const description=document.getElementById("project-description").value.trim();
+   const phase=parseInt(document.getElementById("project-phase").value)||1;
+   const owner=document.getElementById("project-owner").value;
+   if(!name){alert("Project name required.");return;}
+   const id=document.getElementById("project-id").value;
+   if(id){
+     const p=getProject(id);
+     if(p)Object.assign(p,{name,description,phase,owner});
+     toast("Project updated");
+   }else{
+     projects.push({id:"P"+Date.now(),name,description,phase,owner,members:[currentUser?currentUser.id:(members[0]?members[0].id:owner)],color:"#1a6fdb"});
+     activeProjectId=projects[projects.length-1].id;
+     toast("Project added");
+   }
+  closeModal("project"); renderProjects(); renderPhase1Attachments(); afterDataChange();
+}
+
+function renderProjects(){
+  const list=document.getElementById("project-list");
+  const detail=document.getElementById("project-detail");
+  const count=document.getElementById("project-count");
+  if(count)count.textContent=projects.length+" project"+(projects.length===1?"":"s");
+  if(!projects.length){
+    if(list)list.innerHTML=`<div class="info-msg"><i class="ti ti-info-circle" style="font-size:14px;flex-shrink:0"></i><span>No projects yet.</span></div>`;
+    if(detail)detail.innerHTML="";
+    return;
+  }
+  if(!projects.some(p=>p.id===activeProjectId))activeProjectId=projects[0].id;
+  const p=getProject(activeProjectId);
+  if(list){
+    list.innerHTML="";
+    projects.forEach(pr=>{
+      const card=document.createElement("div"); card.className="card card-pad"; card.style.cursor="pointer"; card.style.borderColor=pr.id===p.id?"var(--accent)":"var(--ink-200)";
+card.innerHTML=`<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+         <div><div style="font-weight:700;color:${pr.color}">${esc(pr.name)}</div><div style="font-size:11px;color:var(--ink-400);margin-top:3px">${esc(pr.description||"No description")}</div></div>
+         <span class="chip chip-blue">P${pr.phase||1}</span></div>
+       <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap" onclick="event.stopPropagation()">
+         <button class="btn btn-xs" onclick="selectProject('${esc(pr.id)}')">Open</button>
+         <button class="btn btn-xs" onclick="openProjectModal('${esc(pr.id)}')">Edit</button>
+         <button class="btn btn-xs" onclick="openTaskForProject('${esc(pr.id)}')">New Task</button>
+       </div>`;
+       card.onclick=()=>selectProject(pr.id);
+      list.appendChild(card);
+    });
+  }
+if(detail){
+     const owner=getM(p.owner);
+     const phaseLabels=["Kickoff & Scope","Deployment & Integration","Testing & UAT","Go-Live & Handover"];
+     detail.innerHTML=`<div style="font-size:13px;color:var(--ink-700);line-height:1.6;margin-bottom:12px">${esc(p.description||"No description")}</div>
+       <div class="chips"><span class="chip chip-blue">Phase ${p.phase||1}: ${phaseLabels[(p.phase||1)-1]}</span><span class="chip chip-green">${projectMemberCount(p)} members</span><span class="chip chip-muted">${projectTaskCount(p)} tasks</span></div>
+       <div style="font-size:11px;color:var(--ink-400);margin-top:10px">Owner: ${owner?esc(owner.name):esc(p.owner)}</div>`;
+   }
+   renderProjectPhase1(p);
+  const memberSel=document.getElementById("project-member-select");
+  if(memberSel){
+    memberSel.innerHTML=members.map(m=>`<option value="${esc(m.id)}" ${(p.members||[]).includes(m.id)?"disabled":""}>${esc(m.name)} (${esc(roleLabel(m.role))})</option>`).join("");
+  }
+  const mBody=document.getElementById("project-members-body");
+  if(mBody){
+    mBody.innerHTML="";
+    (p.members||[]).forEach(mid=>{
+      const m=getM(mid); if(!m)return;
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td><div style="display:flex;align-items:center;gap:10px">${avHTML(m.id,28)}<div><div style="font-weight:600">${esc(m.name)}</div><div style="font-size:11px;color:var(--ink-400)">${esc(m.email)}</div></div></div></td>
+        <td><span class="role-badge ${ {admin:"rb-admin",lead:"rb-lead",member:"rb-member",viewer:"rb-viewer"}[m.role]||"rb-member" }">${esc(roleLabel(m.role))}</span></td>
+        <td><span class="dtag dtag-${domainClass(m.domain)}">${esc(m.domain)}</span></td>
+        <td><button class="btn btn-danger btn-xs" onclick="removeProjectMember('${esc(p.id)}','${esc(m.id)}')"><i class="ti ti-user-minus" style="font-size:11px"></i> Remove</button></td>`;
+      mBody.appendChild(tr);
+    });
+    if(!p.members.length)mBody.innerHTML=`<tr><td colspan="4" style="text-align:center;color:var(--ink-400);padding:20px">No members assigned</td></tr>`;
+  }
+  const roleSel=document.getElementById("project-invite-role");
+  const domainSel=document.getElementById("project-invite-domain");
+  if(roleSel)roleSel.innerHTML=roleOptions.map(r=>`<option value="${esc(r.id)}">${esc(r.label)}</option>`).join("");
+  if(domainSel)domainSel.innerHTML=domainOptions.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("");
+  const iBody=document.getElementById("project-invites-body");
+  if(iBody){
+    iBody.innerHTML="";
+    const pinvites=projectInvites.filter(i=>i.projectId===p.id);
+    pinvites.forEach(inv=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td>${esc(inv.email)}</td><td><span class="role-badge ${ {admin:"rb-admin",lead:"rb-lead",member:"rb-member",viewer:"rb-viewer"}[inv.role]||"rb-member" }">${esc(roleLabel(inv.role))}</span></td><td><span class="chip chip-muted">${esc(inv.domain)}</span></td><td style="font-size:12px;color:var(--ink-400)">${esc(inv.date)}</td><td><button class="btn btn-danger btn-xs" onclick="revokeProjectInvite('${esc(inv.id)}')"><i class="ti ti-x" style="font-size:11px"></i> Revoke</button></td>`;
+      iBody.appendChild(tr);
+    });
+    if(!pinvites.length)iBody.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--ink-400);padding:20px">No pending project invitations</td></tr>`;
+  }
+  const tBody=document.getElementById("project-tasks-body");
+  if(tBody){
+    tBody.innerHTML="";
+    const ptasks=tasks.filter(t=>t.project===p.id);
+    ptasks.forEach(t=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td style="font-weight:600">${esc(t.title)}</td><td>${avHTML(t.owner,24)}</td><td><span class="spill ${ {backlog:"sp-plan",inprogress:"sp-prog",review:"sp-hold",done:"sp-done"}[t.col]||"sp-plan" }">${ {backlog:"Backlog",inprogress:"In progress",review:"Review",done:"Done"}[t.col]||t.col }</span></td><td style="font-size:12px;color:var(--ink-600)">${esc(fmtDateShort(t.due))}</td><td><button class="btn btn-xs" onclick="openTaskForProject('${esc(p.id)}')"><i class="ti ti-plus" style="font-size:11px"></i> Assign</button></td>`;
+      tBody.appendChild(tr);
+    });
+    if(!ptasks.length)tBody.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--ink-400);padding:20px">No tasks assigned to this project</td></tr>`;
+  }
+}
+
+function selectProject(id){
+  activeProjectId=id;
+  renderProjects();
+  renderPhase1Attachments();
+  renderKanban(activeFilter);
+}
+
+function projectMemberCount(p){ return (p.members||[]).length; }
+function projectTaskCount(p){ return tasks.filter(t=>t.project===p.id).length; }
+
+function addProjectMember(){
+  const p=getProject(activeProjectId); if(!p)return;
+  const mid=document.getElementById("project-member-select").value;
+  if(!mid){alert("Select a member.");return;}
+  if(!(p.members||[]).includes(mid)){ p.members.push(mid); toast("Member added to project"); }
+  renderProjects(); afterDataChange();
+}
+
+function removeProjectMember(pid,mid){
+  const p=getProject(pid); if(!p)return;
+  p.members=(p.members||[]).filter(m=>m!==mid);
+  renderProjects(); toast("Member removed from project"); afterDataChange();
+}
+
+function inviteProjectMember(){
+  const p=getProject(activeProjectId); if(!p)return;
+  const email=document.getElementById("project-invite-email").value.trim();
+  const role=document.getElementById("project-invite-role").value;
+  const domain=document.getElementById("project-invite-domain").value;
+  if(!email.includes("@")){alert("Invalid email.");return;}
+  if(!roleOptions.some(r=>r.id===role)) role=roleOptions[0]?roleOptions[0].id:"member";
+  if(!domainOptions.includes(domain)) domain=domainOptions[0]||"ALL";
+  projectInvites.push({id:"pinv"+Date.now(),projectId:p.id,email,role,domain,invitedBy:currentUser?currentUser.name:"Admin",date:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})});
+  document.getElementById("project-invite-email").value="";
+  renderProjects(); toast("Project invitation sent"); afterDataChange();
+}
+
+function revokeProjectInvite(id){
+  projectInvites=projectInvites.filter(i=>i.id!==id);
+  renderProjects(); toast("Project invitation revoked"); afterDataChange();
+}
+
+function openTaskForProject(pid){
+  activeProjectId=pid||activeProjectId;
+  openModal("task");
+  populateProjectSelect("nt-project");
+  document.getElementById("nt-project").value=activeProjectId;
+  document.getElementById("nt-title").focus();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  NAV
+// ══════════════════════════════════════════════════════════════
+const pTitles={dashboard:"Deployment Dashboard",projects:"Projects",knowledge:"Knowledge Base",kanban:"Task Board",gantt:"Deployment Timeline",assets:"Asset Registry",risks:"Risk Register",vendors:"Vendor Management",members:"Team Members",settings:"Admin Settings"};
+
+function switchView(id,el){
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  document.querySelectorAll(".sb-item").forEach(n=>n.classList.remove("active"));
+  document.getElementById("view-"+id).classList.add("active");
+  el.classList.add("active");
+  document.getElementById("page-title").textContent=pTitles[id];
+  if(id==="members") renderMembers();
+  if(id==="dashboard") renderDashboard();
+  if(id==="projects") renderProjects();
+if(id==="knowledge") renderKnowledgeBase();
+   if(id==="assets") renderAssets();
+   if(id==="risks") renderRisks();
+   if(id==="vendors") renderVendors();
+   if(id==="settings") renderSettings();
+ }
+
+// ══════════════════════════════════════════════════════════════
+//  MODALS
+// ══════════════════════════════════════════════════════════════
+let editingAssetId=null;
+function openModal(id){
+  document.getElementById("modal-"+id).classList.add("open");
+  if(id==="task"){fillOwnerSel("nt-owner");populateProjectSelect("nt-project");if(currentUser)document.getElementById("nt-owner").value=currentUser.id;const d=new Date();d.setDate(d.getDate()+7);document.getElementById("nt-due").value=d.toISOString().split("T")[0];if(projects.some(p=>p.id===activeProjectId))document.getElementById("nt-project").value=activeProjectId;}
+  if(id==="invite")populateInviteOptions();
+  if(id==="risk")fillOwnerSel("risk-owner");
+}
+function closeModal(id){
+  document.getElementById("modal-"+id).classList.remove("open");
+  if(id==="assign")assignTaskId=null;
+  if(id==="asset"){editingAssetId=null;clearAssetForm();}
+  if(id==="project")renderProjects();
+  if(id==="vendor")renderVendors();
+  if(id==="risk")renderRisks();
+  if(id==="taskdetail")activeTaskDetailId=null;
+}
+["task","invite","assign","asset","project","vendor","member","risk","taskdetail"].forEach(id=>document.getElementById("modal-"+id).addEventListener("click",function(e){if(e.target===this){closeModal(id);}}));
+
+function openMemberModal(id){
+  const m=members.find(x=>x.id===id);
+  if(!m)return;
+  document.getElementById("member-modal-title").innerHTML=`<i class="ti ti-user-edit" style="font-size:16px;color:var(--accent)"></i> Edit Member`;
+  document.getElementById("member-id").value=m.id;
+  document.getElementById("member-name").value=m.name;
+  document.getElementById("member-email").value=m.email;
+  const roleSel=document.getElementById("member-role");
+  const domSel=document.getElementById("member-domain");
+  roleSel.innerHTML=roleOptions.map(r=>`<option value="${esc(r.id)}" ${m.role===r.id?"selected":""}>${esc(r.label)}</option>`).join("");
+  domSel.innerHTML=domainOptions.map(d=>`<option value="${d}" ${m.domain===d?"selected":""}>${d}</option>`).join("");
+  document.getElementById("member-pass").value="";
+  openModal("member");
+}
+function saveMember(){
+  const id=document.getElementById("member-id").value;
+  const m=members.find(x=>x.id===id);
+  if(!m){alert("Member not found.");return;}
+  const name=document.getElementById("member-name").value.trim();
+  const email=document.getElementById("member-email").value.trim();
+  const role=document.getElementById("member-role").value;
+  const domain=document.getElementById("member-domain").value;
+  const pass=document.getElementById("member-pass").value.trim();
+  if(!name||!email){alert("Name and email required.");return;}
+  if(!email.includes("@")){alert("Invalid email.");return;}
+  m.name=name; m.email=email; m.role=role; m.domain=domain;
+  if(pass) m.password=pass;
+  const initials=name.split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
+  m.initials=initials;
+  closeModal("member");
+  toast("Member updated");
+  renderMembers(); renderSettings(); afterDataChange();
+}
+function deleteMemberFromModal(){
+  const id=document.getElementById("member-id").value;
+  if(!id)return;
+  if(!confirm("Delete this member? This will also unassign their tasks."))return;
+  members=members.filter(m=>m.id!==id);
+  tasks=tasks.filter(t=>t.owner!==id);
+  closeModal("member");
+  toast("Member deleted");
+  renderMembers(); renderSettings(); renderProjects(); renderKanban(activeFilter); afterDataChange();
+}
+function deleteMember(id,e){
+  if(e)e.stopPropagation();
+  openMemberModal(id);
+  setTimeout(()=>{
+    if(confirm("Delete this member? This will also unassign their tasks.")){
+      members=members.filter(m=>m.id!==id);
+      tasks=tasks.filter(t=>t.owner!==id);
+      closeModal("member");
+      toast("Member deleted");
+      renderMembers(); renderSettings(); renderProjects(); renderKanban(activeFilter); afterDataChange();
+    } else { closeModal("member"); }
+  },50);
+}
+
+ function openAssetModal(id,e){
+  if(e)e.stopPropagation();
+  editingAssetId=id||null;
+  const a=id?assets.find(x=>x.id===id):null;
+  document.getElementById("asset-modal-title").innerHTML=`<i class="ti ti-server" style="font-size:16px;color:var(--accent)"></i> ${a?"Edit Asset":"New Asset"}`;
+  document.getElementById("asset-id").value=a?a.id:"";
+  document.getElementById("asset-name").value=a?a.name:"";
+  document.getElementById("asset-icon").value=a?a.icon:"ti-shield";
+  document.getElementById("asset-detail").value=a?(a.detail||"").replace(/<br>/g,"\n"):"";
+  document.getElementById("asset-pct").value=a?a.pct:70;
+  document.getElementById("asset-col").value=a?a.col:"c-blue";
+  document.getElementById("asset-label").value=a?a.label:"Ready to deploy";
+  openModal("asset");
+}
+function clearAssetForm(){
+   document.getElementById("asset-id").value="";
+   document.getElementById("asset-name").value="";
+   document.getElementById("asset-icon").value="ti-shield";
+   document.getElementById("asset-detail").value="";
+   document.getElementById("asset-pct").value="70";
+   document.getElementById("asset-col").value="c-blue";
+   document.getElementById("asset-label").value="Ready to deploy";
+ }
+
+ function openVendorModal(id,e){
+   if(e)e.stopPropagation();
+   const v=id?vendors.find(x=>x.id===id):null;
+   document.getElementById("vendor-modal-title").innerHTML=`<i class="ti ti-receipt" style="font-size:16px;color:var(--accent)"></i> ${v?"Edit Vendor":"New Vendor"}`;
+   document.getElementById("vendor-id").value=v?v.id:"";
+   document.getElementById("vendor-name").value=v?v.name:"";
+   document.getElementById("vendor-contact").value=v?v.contact:"";
+   document.getElementById("vendor-email").value=v?v.email:"";
+   document.getElementById("vendor-license-start").value=v?v.licenseStart:"";
+   document.getElementById("vendor-license-end").value=v?v.licenseEnd:"";
+   document.getElementById("vendor-support").value=v?v.support:"Standard";
+   document.getElementById("vendor-notes").value=v?v.notes:"";
+   openModal("vendor");
+ }
+ function saveVendor(){
+   const name=document.getElementById("vendor-name").value.trim();
+   const contact=document.getElementById("vendor-contact").value.trim();
+   const email=document.getElementById("vendor-email").value.trim();
+   const licenseStart=document.getElementById("vendor-license-start").value;
+   const licenseEnd=document.getElementById("vendor-license-end").value;
+   const support=document.getElementById("vendor-support").value;
+   const notes=document.getElementById("vendor-notes").value.trim();
+   if(!name){alert("Vendor name required.");return;}
+   const id=document.getElementById("vendor-id").value;
+   if(id){
+     const v=vendors.find(x=>x.id===id);
+     if(v)Object.assign(v,{name,contact,email,licenseStart,licenseEnd,support,notes});
+     toast("Vendor updated");
+   }else{
+     vendors.push({id:"V"+Date.now(),name,contact,email,licenseStart,licenseEnd,support,notes});
+     toast("Vendor added");
+   }
+   closeModal("vendor"); renderVendors(); afterDataChange();
+ }
+ function deleteVendor(id,e){
+   if(e)e.stopPropagation();
+   if(!confirm("Delete this vendor?"))return;
+   vendors=vendors.filter(v=>v.id!==id);
+   renderVendors(); toast("Vendor deleted"); afterDataChange();
+ }
+
+ // ══════════════════════════════════════════════════════════════
+ //  RISK REGISTER — modal + CRUD (synced to Google Sheets "Risks")
+ // ══════════════════════════════════════════════════════════════
+ function openRiskModal(id,e){
+   if(e)e.stopPropagation();
+   const r=id?risks.find(x=>x.id===id):null;
+   document.getElementById("risk-modal-title").innerHTML=`<i class="ti ti-alert-triangle" style="font-size:16px;color:var(--accent)"></i> ${r?"Edit Risk":"New Risk"}`;
+   document.getElementById("risk-id").value=r?r.id:"";
+   document.getElementById("risk-desc").value=r?r.risk:"";
+   document.getElementById("risk-cat").value=r?r.cat:"";
+   document.getElementById("risk-like").value=r?r.like:"Medium";
+   document.getElementById("risk-impact").value=r?r.impact:"High";
+   document.getElementById("risk-level").value=r?r.level:"rl-m";
+   document.getElementById("risk-mit").value=r?r.mit:"";
+   openModal("risk");
+   document.getElementById("risk-owner").value=r?r.owner:(currentUser?currentUser.id:(members[0]?members[0].id:""));
+ }
+ function saveRisk(){
+   const risk=document.getElementById("risk-desc").value.trim();
+   const cat=document.getElementById("risk-cat").value.trim()||"General";
+   const owner=document.getElementById("risk-owner").value;
+   const like=document.getElementById("risk-like").value;
+   const impact=document.getElementById("risk-impact").value;
+   const level=document.getElementById("risk-level").value;
+   const mit=document.getElementById("risk-mit").value.trim();
+   if(!risk){alert("Risk description required.");return;}
+   const id=document.getElementById("risk-id").value;
+   if(id){
+     const r=risks.find(x=>x.id===id);
+     if(r)Object.assign(r,{risk,cat,owner,like,impact,level,mit});
+     toast("Risk updated");
+   }else{
+     risks.push({id:"R"+Date.now(),risk,cat,owner,like,impact,level,mit});
+     toast("Risk added");
+   }
+   closeModal("risk"); afterDataChange();
+ }
+ function deleteRisk(id,e){
+   if(e)e.stopPropagation();
+   if(!confirm("Delete this risk?"))return;
+   risks=risks.filter(r=>r.id!==id);
+   toast("Risk deleted"); afterDataChange();
+ }
+
+ // ══════════════════════════════════════════════════════════════
+ //  TASK DETAIL + COMMENTS (synced to Google Sheets "TaskComments")
+ // ══════════════════════════════════════════════════════════════
+ let activeTaskDetailId=null;
+ function openTaskDetail(taskId){
+   const t=tasks.find(x=>x.id===taskId);
+   if(!t)return;
+   activeTaskDetailId=taskId;
+   document.getElementById("td-title").textContent=t.title;
+   const stageLabel={backlog:"Backlog",inprogress:"In Progress",review:"Review",done:"Done"}[t.col]||t.col;
+   const owner=getM(t.owner);
+   document.getElementById("td-meta").innerHTML=`
+     <span class="dtag dtag-${t.tag}">${t.tag}</span>
+     <span class="chip chip-muted">${esc(projectName(t.project))}</span>
+     <span class="spill ${ {backlog:"sp-plan",inprogress:"sp-prog",review:"sp-hold",done:"sp-done"}[t.col]||"sp-plan" }">${stageLabel}</span>
+     <span class="chip chip-muted"><i class="ti ti-calendar" style="font-size:10px"></i> ${esc(fmtDate(t.due))}</span>
+     <span class="chip chip-muted">Owner: ${owner?esc(owner.name):esc(t.owner)}</span>
+     <span class="chip ${t.pri==="h"?"chip-red":t.pri==="m"?"chip-amber":"chip-green"}">${t.pri==="h"?"High":t.pri==="m"?"Medium":"Low"} priority</span>`;
+   renderTaskComments();
+   document.getElementById("td-new-comment").value="";
+   openModal("taskdetail");
+ }
+ function renderTaskComments(){
+   const listEl=document.getElementById("td-comments");
+   const countEl=document.getElementById("td-cmt-count");
+   if(!listEl||!activeTaskDetailId)return;
+   const list=taskComments.filter(c=>c.taskId===activeTaskDetailId).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+   if(countEl)countEl.textContent=list.length;
+   if(!list.length){
+     listEl.innerHTML=`<div class="comment-empty">No comments yet. Be the first to leave one for the team.</div>`;
+     return;
+   }
+   listEl.innerHTML="";
+   list.forEach(c=>{
+     const item=document.createElement("div"); item.className="comment-item";
+     item.innerHTML=`<div class="comment-head"><span class="comment-author">${esc(c.author)}</span><span class="comment-time">${esc(c.date)}</span></div>
+       <div class="comment-text">${esc(c.text)}</div>`;
+     listEl.appendChild(item);
+   });
+   listEl.scrollTop=listEl.scrollHeight;
+ }
+ function addTaskComment(){
+   if(!activeTaskDetailId)return;
+   const ta=document.getElementById("td-new-comment");
+   const text=ta.value.trim();
+   if(!text){alert("Write a comment first.");return;}
+   const author=currentUser?currentUser.name:"Anonymous";
+   const date=new Date().toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"});
+   taskComments.push({id:"c"+Date.now(),taskId:activeTaskDetailId,author,text,date});
+   ta.value="";
+   renderTaskComments();
+   const t=tasks.find(x=>x.id===activeTaskDetailId);
+   if(t){
+     activities.unshift({icon:"ti-message-circle",color:"#185FA5",bg:"#E6F1FB",text:`${author} commented on "${t.title.substring(0,50)}"`,time:"Just now"});
+     if(activities.length>8)activities.pop();
+   }
+   afterDataChange();
+   renderKanban(activeFilter);
+ }
+
+function addRole(){
+  const label=document.getElementById("new-role").value.trim();
+  if(!label){alert("Role name required.");return;}
+  const id=label.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24)||"role-"+Date.now();
+  if(roleOptions.some(r=>r.id===id)){alert("Role already exists.");return;}
+  roleOptions.push({id,label});
+  document.getElementById("new-role").value="";
+  populateInviteOptions(); renderSettings(); toast("Role added: "+label); afterDataChange();
+}
+
+function removeRole(id){
+  if(id===currentUser?.role){alert("You cannot remove your current role.");return;}
+  if(roleOptions.length<=1){alert("At least one role is required.");return;}
+  if(members.some(m=>m.role===id)){alert("Remove this role from all members before deleting it.");return;}
+  roleOptions=roleOptions.filter(r=>r.id!==id);
+  populateInviteOptions(); renderSettings(); toast("Role removed"); afterDataChange();
+}
+
+function addDomain(){
+  const domain=document.getElementById("new-domain").value.trim().toUpperCase().replace(/\s+/g,"-").replace(/[^A-Z0-9-]/g,"").slice(0,16);
+  if(!domain){alert("Domain required.");return;}
+  if(domainOptions.includes(domain)){alert("Domain already exists.");return;}
+  domainOptions.push(domain);
+  document.getElementById("new-domain").value="";
+  populateInviteOptions(); renderSettings(); toast("Domain added: "+domain); afterDataChange();
+}
+
+function removeDomain(domain){
+  if(domain==="ALL"||domain===currentUser?.domain){alert("This domain cannot be removed.");return;}
+  if(domainOptions.length<=1){alert("At least one domain is required.");return;}
+  if(members.some(m=>m.domain===domain)){alert("Remove this domain from all members before deleting it.");return;}
+  domainOptions=domainOptions.filter(d=>d!==domain);
+  populateInviteOptions(); renderSettings(); toast("Domain removed"); afterDataChange();
+}
+
+function addTask(){
+  const title=document.getElementById("nt-title").value.trim();
+  if(!title){alert("Enter a task title.");return;}
+  const tag=document.getElementById("nt-tag").value, pri=document.getElementById("nt-pri").value;
+  const owner=document.getElementById("nt-owner").value, col=document.getElementById("nt-col").value;
+  const project=document.getElementById("nt-project").value || (projects[0]&&projects[0].id) || "";
+  const due=document.getElementById("nt-due").value; // stored as ISO yyyy-mm-dd, formatted for display via fmtDate()
+  tasks.push({id:nextId++,title,tag,pri,due,owner,project,col});
+  const m=getM(owner);
+  activities.unshift({icon:"ti-plus",color:"#185FA5",bg:"#E6F1FB",text:`New task assigned to ${m?m.name:owner}: "${title.substring(0,50)}"`,time:"Just now"});
+  if(activities.length>8)activities.pop();
+  closeModal("task"); document.getElementById("nt-title").value="";
+  toast("Task added → "+(m?m.name:owner));
+  renderKanban(activeFilter);
+  if(document.getElementById("view-projects").classList.contains("active"))renderProjects();
+  afterDataChange();
+}
+
+function saveAsset(){
+  const name=document.getElementById("asset-name").value.trim();
+  const detail=document.getElementById("asset-detail").value.trim();
+  const pct=Math.max(0,Math.min(100,parseInt(document.getElementById("asset-pct").value)||0));
+  const icon=document.getElementById("asset-icon").value;
+  const col=document.getElementById("asset-col").value;
+  const label=document.getElementById("asset-label").value.trim()||"Ready to deploy";
+  const icMap={ "c-blue":"#185FA5","c-purple":"#5448c8","c-teal":"#0f7c6e","c-amber":"#c47c0a","c-coral":"#c4521a","c-green":"#1a8a5a","c-gray":"#6b728e" };
+  if(!name){alert("Asset name required.");return;}
+  if(editingAssetId){
+    const a=assets.find(x=>x.id===editingAssetId);
+    if(a)Object.assign(a,{name,detail,pct,icon,col,label,ic:icMap[col]});
+    toast("Asset updated");
+  }else{
+    assets.push({id:"A"+Date.now(),name,detail,pct,icon,col,label,ic:icMap[col]});
+    toast("Asset added");
+  }
+  closeModal("asset");
+  renderAssets();
+  afterDataChange();
+}
+
+function deleteAsset(id,e){
+  if(e)e.stopPropagation();
+  if(!confirm("Delete this asset?"))return;
+  assets=assets.filter(a=>a.id!==id);
+  renderAssets();
+  toast("Asset deleted");
+  afterDataChange();
+}
+
+let assignTaskId=null;
+function openAssignModal(tid,e){
+  if(e)e.stopPropagation(); assignTaskId=tid;
+  const t=tasks.find(t=>t.id===tid);
+  document.getElementById("assign-t-title").textContent=t?t.title:"";
+  fillOwnerSel("assign-owner"); if(t)document.getElementById("assign-owner").value=t.owner;
+  openModal("assign");
+}
+function confirmAssign(){
+  if(!assignTaskId)return;
+  const newOwner=document.getElementById("assign-owner").value;
+  const t=tasks.find(t=>t.id===assignTaskId);
+  if(t){ t.owner=newOwner; const m=getM(newOwner);
+    activities.unshift({icon:"ti-user-check",color:"#185FA5",bg:"#E6F1FB",text:`Task reassigned to ${m?m.name:newOwner}: "${t.title.substring(0,50)}"`,time:"Just now"});
+    if(activities.length>8)activities.pop();
+    toast("Reassigned → "+(m?m.name:newOwner));
+  }
+  closeModal("assign");
+  renderKanban(activeFilter);
+  if(document.getElementById("view-members").classList.contains("active"))renderMembers();
+  afterDataChange();
+}
+
+function prefillAssignForMember(mid){ openModal("task"); document.getElementById("nt-owner").value=mid; }
+
+function sendInvite(){
+  const name=document.getElementById("in-name").value.trim(), email=document.getElementById("in-email").value.trim();
+  const role=document.getElementById("in-role").value, domain=document.getElementById("in-domain").value;
+  const pass=document.getElementById("in-pass").value.trim()||"Welcome2026!";
+  if(!roleOptions.some(r=>r.id===role)) role=roleOptions.some(r=>r.id==="member")?"member":(roleOptions[0]&&roleOptions[0].id)||"member";
+  if(!domainOptions.includes(domain)) domain=domainOptions.includes("ALL")?"ALL":domainOptions[0]||"ALL";
+  if(!name||!email){alert("Name and email required.");return;}
+  if(!email.includes("@")){alert("Invalid email.");return;}
+  const invite={id:"inv"+Date.now(),name,email,role,domain,password:pass,invitedBy:currentUser?currentUser.name:"Admin"};
+  const applyLocal=()=>{
+    if(members.find(m=>m.email.toLowerCase()===email.toLowerCase())){alert("Already a member.");return;}
+    const initials=name.split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
+    const palette=[["#B5D4F4","#0C447C"],["#CECBF6","#3C3489"],["#9FE1CB","#085041"],["#FAC775","#633806"],["#FFC4B5","#7A2810"]];
+    const [col,tc]=palette[members.length%palette.length];
+    const nid=(initials+(Date.now()%1000)).replace(/\s/g,"");
+    const newMember={id:nid,name,email,password:pass,role,domain,initials,color:col,textColor:tc};
+    members.push(newMember);
+    invites.push({...invite,date:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})});
+    activities.unshift({icon:"ti-user-plus",color:"#1D9E75",bg:"#EAF3DE",text:`${currentUser?.name||"Admin"} invited ${name} (${role})`,time:"Just now"});
+    if(activities.length>8)activities.pop();
+    closeModal("invite");
+    document.getElementById("in-name").value=""; document.getElementById("in-email").value=""; document.getElementById("in-pass").value="";
+    toast(name+" added as "+role);
+    if(document.getElementById("view-members").classList.contains("active"))renderMembers();
+    afterDataChange();
+  };
+  if(!cloudMode){ applyLocal(); return; }
+  setSyncPill("busy");
+  gsSendInviteEmail(invite).then(j=>{
+    if(j && j.alreadyMember){ alert("Already a member: "+(j.name||email)); setSyncPill("ok"); return; }
+    if(j && j.emailError){ toast("Invite saved, email failed: "+j.emailError,"warn"); }
+    else { toast("Invitation email sent to "+email,"ok"); }
+    if(j && j.member) members.push(j.member);
+    if(j && j.invite) invites.push(j.invite);
+    activities.unshift({icon:"ti-user-plus",color:"#1D9E75",bg:"#EAF3DE",text:`${currentUser?.name||"Admin"} invited ${name} (${role})`,time:"Just now"});
+    if(activities.length>8)activities.pop();
+    closeModal("invite");
+    document.getElementById("in-name").value=""; document.getElementById("in-email").value=""; document.getElementById("in-pass").value="";
+    setSyncPill("ok");
+    if(document.getElementById("view-members").classList.contains("active"))renderMembers();
+    afterDataChange();
+  }).catch(err=>{
+    setSyncPill("err");
+    applyLocal();
+    toast("Cloud invite failed — added locally","warn");
+  });
+}
+
+function resendInvite(id){
+  const inv=invites.find(i=>i.id===id);
+  if(!inv){alert("Invitation not found.");return;}
+  if(!cloudMode){ toast("Switch to Google Sheets sync to resend by email","warn"); return; }
+  setSyncPill("busy");
+  gsResendInviteEmail({email:inv.email}).then(j=>{
+    if(j && j.notFound){ toast("Email not found in cloud — added locally?","warn"); }
+    else if(j && j.emailError){ toast("Resend failed: "+j.emailError,"err"); }
+    else { toast("Invitation resent to "+inv.email,"ok"); }
+    setSyncPill("ok");
+  }).catch(err=>{
+    setSyncPill("err");
+    toast("Resend failed: "+err.message,"err");
+  });
+}
+function revokeInvite(id){ invites=invites.filter(i=>i.id!==id); renderMembers(); toast("Invitation revoked"); afterDataChange(); }
+
+function changeRole(mid,role){
+  const m=members.find(m=>m.id===mid);
+  if(!roleOptions.some(r=>r.id===role)){alert("Invalid role.");return;}
+  if(m){ m.role=role; toast(m.name+" role → "+roleLabel(role)); setTimeout(()=>renderMembers(),100); if(document.getElementById("view-settings").classList.contains("active"))renderSettings(); afterDataChange(); }
+}
+
+function changeDomain(mid,domain){
+  const m=members.find(m=>m.id===mid);
+  if(!domainOptions.includes(domain)){alert("Invalid domain.");return;}
+  if(m){ m.domain=domain; toast(m.name+" domain → "+domain); setTimeout(()=>renderMembers(),100); if(document.getElementById("view-settings").classList.contains("active"))renderSettings(); afterDataChange(); }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════
+function initApp(){
+   renderDashboard(); renderProjects(); renderKanban("all"); renderGantt(); renderAssets(); renderRisks(); renderVendors();
+ }
+
+(function boot(){
+  const cachedSnap=localStorage.getItem("mssp_snap");
+  if(cachedSnap){ try{ applySnapshot(JSON.parse(cachedSnap)); }catch(e){} }
+
+  // Self-hosted detection: if this page is being served BY the Apps Script
+  // Web App itself (opened directly, or embedded in a Google Site via its
+  // /exec URL), it can talk to its own endpoint with no URL to paste.
+  // This is a best-effort check — if it doesn't resolve, the manual
+  // "paste your Web App URL" setup screen below is always the fallback.
+  let selfUrl = "";
+  try {
+    if (/script\.google(usercontent)?\.com$/.test(location.hostname)) {
+      selfUrl = location.href.split("?")[0].replace(/\/+$/,"");
+    }
+  } catch(e) {}
+
+  // Optional: paste your own deployed /exec URL here to auto-connect on
+  // every load without going through the setup screen. Leave blank to
+  // always use the setup screen / cached URL instead.
+  const HARDCODED_URL = "https://script.google.com/macros/s/AKfycbxGpfC4xxbIbYTXU6-XNfhCyDdM3iZC1hkltHo9vKs6cDMy6eIt_G2KL_8msj_KZHrt4Q/exec";
+
+  const url = selfUrl || HARDCODED_URL || localStorage.getItem("mssp_gs_url");
+  if(url){
+    GS_URL=url.replace(/\/+$/,""); cloudMode=true;
+    localStorage.setItem("mssp_gs_url", GS_URL);
+    setLoading(true,"Connecting to Google Sheets…");
+    gsLoad().then(snap=>{
+      applySnapshot(snap); localSave(); setLoading(false); setSyncPill("ok");
+      if(!members.length) showBootstrap(); else showLogin();
+    }).catch(err=>{
+      const msg = err && err.message ? err.message : String(err);
+      setLoading(false); setSyncPill("err");
+      if(!members.length) showBootstrap(); else showLogin();
+      toast("Could not reach Google Sheets: "+msg+" — using cached data","warn");
+    });
+  } else {
+    setLoading(false);
+    document.getElementById("setup-screen").classList.remove("hidden");
+  }
+})();
+</script>
+</body>
+</html>

@@ -41,6 +41,11 @@ Fill in:
 - `GOOGLE_PRIVATE_KEY` — the `private_key` from the JSON key (keep the quotes and `\n` sequences).
 - `GOOGLE_SHEET_ID` — the spreadsheet ID from step 2.
 - `AUTH_SECRET` — a random secret for signing session cookies: `openssl rand -base64 32`.
+- `RESEND_API_KEY` — needed to send member invitation emails. Sign up free at
+  [resend.com](https://resend.com), create an API key, and paste it in. Without a
+  verified sending domain, Resend still delivers from `onboarding@resend.dev` to any
+  recipient — fine for getting started. `RESEND_FROM_EMAIL` and `NEXT_PUBLIC_APP_URL`
+  are optional overrides (see comments in `.env.local.example`).
 
 ### 4. Create the sheet tabs
 
@@ -60,7 +65,8 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) — since the Members tab is empty,
 you'll land on **Set up** to create the first admin account. After that, sign in
-normally and invite the rest of the team from **Members**.
+normally and invite the rest of the team by email from **Members** — pick their role
+and (optionally) a project to add them to as soon as they accept.
 
 ## Architecture
 

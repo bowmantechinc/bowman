@@ -25,7 +25,7 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL(authed ? "/dashboard" : "/login", req.url));
   }
 
-  const isPublic = PUBLIC_ROUTES.has(pathname);
+  const isPublic = PUBLIC_ROUTES.has(pathname) || pathname.startsWith("/accept-invite/");
 
   if (!isPublic && !authed) {
     return NextResponse.redirect(new URL("/login", req.url));

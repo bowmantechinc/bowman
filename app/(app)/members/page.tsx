@@ -1,16 +1,23 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MemberAvatar } from "@/components/member-avatar";
 import { ToneBadge } from "@/components/tone-badge";
 import { InlineSelectAction } from "@/components/inline-select-action";
 import { MemberFormDialog } from "@/components/members/member-form-dialog";
+import { InviteMemberDialog } from "@/components/members/invite-member-dialog";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
+import { Button } from "@/components/ui/button";
+import { RotateCw } from "lucide-react";
 import { changeMemberRole, changeMemberLabel, deleteMember } from "@/lib/actions/members";
+import { resendInvite, revokeInvite } from "@/lib/actions/invites";
 import { membersRepo } from "@/lib/db/members";
 import { rolesRepo } from "@/lib/db/roles";
 import { labelsRepo } from "@/lib/db/labels";
 import { tasksRepo } from "@/lib/db/tasks";
+import { invitesRepo } from "@/lib/db/invites";
+import { projectsRepo } from "@/lib/db/projects";
 import { getSession } from "@/lib/auth/session";
 import { isManager } from "@/lib/auth/dal";
 
@@ -22,11 +29,13 @@ const ROLE_TONE: Record<string, "purple" | "blue" | "gray" | "green"> = {
 };
 
 export default async function MembersPage() {
-  const [members, roles, labels, tasks, session] = await Promise.all([
+  const [members, roles, labels, tasks, invites, projects, session] = await Promise.all([
     membersRepo.list(),
     rolesRepo.list(),
     labelsRepo.list(),
     tasksRepo.list(),
+    invitesRepo.list(),
+    projectsRepo.list(),
     getSession(),
   ]);
 
@@ -34,13 +43,23 @@ export default async function MembersPage() {
   const isAdmin = session?.role === "admin";
   const roleOptions = roles.map((r) => ({ value: r.id, label: r.label }));
   const labelOptions = labels.map((l) => ({ value: l.id, label: l.name }));
+  const pendingInvites = invites
+    .filter((i) => i.status === "pending")
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   return (
     <div>
       <PageHeader
         title="Members"
         description={`${members.length} member${members.length === 1 ? "" : "s"}`}
-        actions={canManage && <MemberFormDialog roles={roles} labels={labels} />}
+        actions={
+          canManage && (
+            <>
+              <InviteMemberDialog roles={roles} labels={labels} projects={projects} />
+              <MemberFormDialog roles={roles} labels={labels} />
+            </>
+          )
+        }
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -110,6 +129,64 @@ export default async function MembersPage() {
           );
         })}
       </div>
+
+      {canManage && (
+        <div className="mt-8">
+          <h2 className="text-muted-foreground mb-3 text-[11px] font-semibold tracking-wide uppercase">
+            Pending Invitations
+          </h2>
+          {pendingInvites.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No pending invitations.</p>
+          ) : (
+            <Card className="py-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Project</TableHead>
+                    <TableHead>Invited by</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pendingInvites.map((inv) => {
+                    const roleLabel = roles.find((r) => r.id === inv.role)?.label ?? inv.role;
+                    const project = projects.find((p) => p.id === inv.projectId);
+                    return (
+                      <TableRow key={inv.id}>
+                        <TableCell className="font-medium">{inv.email}</TableCell>
+                        <TableCell>
+                          <ToneBadge tone="gray">{roleLabel}</ToneBadge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{project?.name ?? "—"}</TableCell>
+                        <TableCell className="text-muted-foreground">{inv.invitedBy}</TableCell>
+                        <TableCell className="text-muted-foreground text-xs">
+                          {new Date(inv.createdAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end gap-1.5">
+                            <form action={resendInvite.bind(null, inv.id)}>
+                              <Button type="submit" variant="outline" size="icon-sm" title="Resend email">
+                                <RotateCw className="size-3.5" />
+                              </Button>
+                            </form>
+                            <ConfirmDeleteButton
+                              action={revokeInvite.bind(null, inv.id)}
+                              confirmMessage="Revoke this invitation?"
+                            />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </Card>
+          )}
+        </div>
+      )}
     </div>
   );
 }

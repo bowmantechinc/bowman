@@ -99,17 +99,35 @@ export async function ensureTabs(schemas: TabSchema[]) {
   }
 }
 
+// Google Sheets enforces a per-minute read-request quota, and every page in
+// this app reads several tabs on every render. Cache each tab's rows briefly
+// and invalidate on write so back-to-back reads (e.g. dashboard + layout +
+// page all reading Members) cost one API call instead of one each, while
+// mutations are still reflected immediately.
+const rowsCache = new Map<string, { at: number; rows: Row[] }>();
+const ROWS_CACHE_TTL_MS = 10_000;
+
+function invalidateRowsCache(tab: string) {
+  rowsCache.delete(tab);
+}
+
 export async function listRows(tab: string, headers: string[]): Promise<Row[]> {
+  const cached = rowsCache.get(tab);
+  if (cached && Date.now() - cached.at < ROWS_CACHE_TTL_MS) {
+    return cached.rows;
+  }
   const sheets = getSheetsApi();
   const lastCol = columnLetter(headers.length - 1);
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: getSheetId(),
     range: `${quoteSheetName(tab)}!A2:${lastCol}`,
   });
-  const rows = res.data.values ?? [];
-  return rows
+  const rawRows = res.data.values ?? [];
+  const rows = rawRows
     .filter((r) => r.some((cell) => String(cell ?? "").trim() !== ""))
     .map((r) => rowToObject(r as string[], headers));
+  rowsCache.set(tab, { at: Date.now(), rows });
+  return rows;
 }
 
 export async function getRow(tab: string, headers: string[], id: string): Promise<Row | null> {
@@ -139,6 +157,7 @@ export async function createRow(tab: string, headers: string[], data: Row): Prom
     insertDataOption: "INSERT_ROWS",
     requestBody: { values: [objectToRow(data, headers)] },
   });
+  invalidateRowsCache(tab);
   return data;
 }
 
@@ -160,6 +179,7 @@ export async function updateRow(
     valueInputOption: "RAW",
     requestBody: { values: [objectToRow(merged, headers)] },
   });
+  invalidateRowsCache(tab);
   return merged;
 }
 
@@ -187,6 +207,7 @@ export async function deleteRow(tab: string, id: string): Promise<void> {
       ],
     },
   });
+  invalidateRowsCache(tab);
 }
 
 export interface Repo<T extends { id: string }> {

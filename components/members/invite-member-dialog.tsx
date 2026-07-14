@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { AlertCircle, CheckCircle2, Pencil, UserPlus } from "lucide-react";
+import { AlertCircle, CheckCircle2, Mail } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -16,56 +16,43 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SubmitButton } from "@/components/auth/submit-button";
-import { createMember, updateMember } from "@/lib/actions/members";
-import type { Member } from "@/lib/db/members";
+import { createInvite } from "@/lib/actions/invites";
 import type { Role } from "@/lib/db/roles";
 import type { Label as MemberLabel } from "@/lib/db/labels";
+import type { Project } from "@/lib/db/projects";
 import { INITIAL_ACTION_STATE } from "@/lib/actions/types";
-import { useCloseOnSuccess } from "@/hooks/use-close-on-success";
 
-export function MemberFormDialog({
+export function InviteMemberDialog({
   roles,
   labels,
-  member,
+  projects,
 }: {
   roles: Role[];
   labels: MemberLabel[];
-  member?: Member;
+  projects: Project[];
 }) {
   const [open, setOpen] = useState(false);
-  const action = member ? updateMember : createMember;
-  const [state, formAction] = useActionState(action, INITIAL_ACTION_STATE);
-
-  useCloseOnSuccess(state, setOpen, (s) => !!s.ok && !!member);
+  const [state, formAction] = useActionState(createInvite, INITIAL_ACTION_STATE);
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(o) => {
-        setOpen(o);
-      }}
-    >
-      <DialogTrigger
-        aria-label={member ? "Edit member" : undefined}
-        className={buttonVariants({ variant: "outline", size: member ? "icon-sm" : "sm" })}
-      >
-        {member ? <Pencil /> : <><UserPlus /> Add Directly</>}
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger className={buttonVariants({ size: "sm" })}>
+        <Mail />
+        Invite Member
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{member ? "Edit member" : "Add a team member directly"}</DialogTitle>
-          {!member && (
-            <DialogDescription>
-              Creates the account immediately with a temporary password, instead of sending an email invite.
-            </DialogDescription>
-          )}
+          <DialogTitle>Invite a team member</DialogTitle>
+          <DialogDescription>
+            Sends an email with a link to join, set their own password, and (if you pick one) join a project right away.
+          </DialogDescription>
         </DialogHeader>
 
         {state?.ok && state.message ? (
           <div className="space-y-3">
             <div className="bg-emerald-500/10 text-emerald-700 flex items-start gap-2 rounded-md px-3 py-2.5 text-sm dark:text-emerald-400">
               <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
-              <span>{state.message} Share this with them — it won&apos;t be shown again.</span>
+              <span>{state.message}</span>
             </div>
             <DialogFooter>
               <Button onClick={() => setOpen(false)}>Done</Button>
@@ -73,7 +60,6 @@ export function MemberFormDialog({
           </div>
         ) : (
           <form action={formAction} className="space-y-3">
-            {member && <input type="hidden" name="id" value={member.id} />}
             {state?.error && (
               <div className="bg-destructive/10 text-destructive flex items-center gap-2 rounded-md px-3 py-2 text-sm">
                 <AlertCircle className="size-4 shrink-0" />
@@ -81,18 +67,14 @@ export function MemberFormDialog({
               </div>
             )}
             <div className="space-y-1.5">
-              <Label htmlFor="name">Full name</Label>
-              <Input id="name" name="name" required defaultValue={member?.name} placeholder="e.g. Maria Santos" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" required defaultValue={member?.email} placeholder="maria@example.com" />
+              <Label htmlFor="invite-email">Email</Label>
+              <Input id="invite-email" name="email" type="email" required placeholder="maria@example.com" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="role">Role</Label>
-                <Select name="role" defaultValue={member?.role ?? roles.find((r) => r.id === "member")?.id ?? roles[0]?.id}>
-                  <SelectTrigger id="role" className="w-full">
+                <Label htmlFor="invite-role">Role</Label>
+                <Select name="role" defaultValue={roles.find((r) => r.id === "member")?.id ?? roles[0]?.id}>
+                  <SelectTrigger id="invite-role" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -105,9 +87,9 @@ export function MemberFormDialog({
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="labelId">Label</Label>
-                <Select name="labelId" defaultValue={member?.labelId ?? labels[0]?.id ?? ""}>
-                  <SelectTrigger id="labelId" className="w-full">
+                <Label htmlFor="invite-label">Label</Label>
+                <Select name="labelId" defaultValue={labels[0]?.id ?? ""}>
+                  <SelectTrigger id="invite-label" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -120,17 +102,27 @@ export function MemberFormDialog({
                 </Select>
               </div>
             </div>
-            {member && (
-              <div className="space-y-1.5">
-                <Label htmlFor="password">Reset password</Label>
-                <Input id="password" name="password" placeholder="Leave blank to keep current" />
-              </div>
-            )}
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-project">Project (optional)</Label>
+              <Select name="projectId" defaultValue="none">
+                <SelectTrigger id="invite-project" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No project — workspace only</SelectItem>
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <SubmitButton className="w-auto">{member ? "Save changes" : "Add member"}</SubmitButton>
+              <SubmitButton className="w-auto">Send invite</SubmitButton>
             </DialogFooter>
           </form>
         )}

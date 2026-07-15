@@ -5,8 +5,8 @@
 import { config } from "dotenv";
 import path from "node:path";
 import postgres from "postgres";
-import { createClient } from "@supabase/supabase-js";
-import ws from "ws";
+import { cert, initializeApp } from "firebase-admin/app";
+import { getStorage } from "firebase-admin/storage";
 
 config({ path: path.resolve(__dirname, "../.env.local") });
 
@@ -88,22 +88,21 @@ async function main() {
     }
   }
 
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (supabaseUrl && supabaseKey) {
-    console.log("Ensuring 'attachments' storage bucket exists...");
-    const supabase = createClient(supabaseUrl, supabaseKey, {
-      auth: { persistSession: false },
-      realtime: { transport: ws as unknown as typeof WebSocket },
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  const storageBucket = process.env.FIREBASE_STORAGE_BUCKET;
+  if (projectId && clientEmail && privateKey && storageBucket) {
+    console.log("Checking Firebase Storage bucket...");
+    initializeApp({
+      credential: cert({ projectId, clientEmail, privateKey: privateKey.replace(/\\n/g, "\n") }),
+      storageBucket,
     });
-    const { data: buckets } = await supabase.storage.listBuckets();
-    if (!buckets?.some((b) => b.name === "attachments")) {
-      const { error } = await supabase.storage.createBucket("attachments", { public: true });
-      if (error) console.warn("Could not create storage bucket:", error.message);
-      else console.log("Created 'attachments' storage bucket.");
-    }
+    const [exists] = await getStorage().bucket().exists();
+    if (exists) console.log(`Firebase Storage bucket "${storageBucket}" is reachable.`);
+    else console.warn(`Bucket "${storageBucket}" doesn't exist — enable Storage for this project in the Firebase console.`);
   } else {
-    console.warn("Skipping storage bucket setup — SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY not set.");
+    console.warn("Skipping storage check — FIREBASE_PROJECT_ID/FIREBASE_CLIENT_EMAIL/FIREBASE_PRIVATE_KEY/FIREBASE_STORAGE_BUCKET not set.");
   }
 
   console.log("Setup complete. Run `npm run dev` and open /setup to create the first admin.");

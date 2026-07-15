@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireSession } from "@/lib/auth/dal";
 import { attachmentsRepo } from "@/lib/db/attachments";
-import { uploadAttachmentFile, deleteAttachmentFile } from "@/lib/firebase/storage";
+import { uploadAttachmentFile, deleteAttachmentFile } from "@/lib/r2/storage";
 import type { ActionState } from "./types";
 
 const MAX_SIZE = 5 * 1024 * 1024;

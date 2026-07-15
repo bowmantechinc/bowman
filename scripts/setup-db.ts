@@ -5,8 +5,7 @@
 import { config } from "dotenv";
 import path from "node:path";
 import postgres from "postgres";
-import { cert, initializeApp } from "firebase-admin/app";
-import { getStorage } from "firebase-admin/storage";
+import { HeadBucketCommand, S3Client } from "@aws-sdk/client-s3";
 
 config({ path: path.resolve(__dirname, "../.env.local") });
 
@@ -88,21 +87,25 @@ async function main() {
     }
   }
 
-  const projectId = process.env.FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
-  const storageBucket = process.env.FIREBASE_STORAGE_BUCKET;
-  if (projectId && clientEmail && privateKey && storageBucket) {
-    console.log("Checking Firebase Storage bucket...");
-    initializeApp({
-      credential: cert({ projectId, clientEmail, privateKey: privateKey.replace(/\\n/g, "\n") }),
-      storageBucket,
+  const r2AccountId = process.env.R2_ACCOUNT_ID;
+  const r2AccessKeyId = process.env.R2_ACCESS_KEY_ID;
+  const r2SecretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+  const r2Bucket = process.env.R2_BUCKET_NAME;
+  if (r2AccountId && r2AccessKeyId && r2SecretAccessKey && r2Bucket) {
+    console.log("Checking R2 bucket...");
+    const s3 = new S3Client({
+      region: "auto",
+      endpoint: `https://${r2AccountId}.r2.cloudflarestorage.com`,
+      credentials: { accessKeyId: r2AccessKeyId, secretAccessKey: r2SecretAccessKey },
     });
-    const [exists] = await getStorage().bucket().exists();
-    if (exists) console.log(`Firebase Storage bucket "${storageBucket}" is reachable.`);
-    else console.warn(`Bucket "${storageBucket}" doesn't exist — enable Storage for this project in the Firebase console.`);
+    try {
+      await s3.send(new HeadBucketCommand({ Bucket: r2Bucket }));
+      console.log(`R2 bucket "${r2Bucket}" is reachable.`);
+    } catch (err) {
+      console.warn(`Could not reach R2 bucket "${r2Bucket}":`, err instanceof Error ? err.message : err);
+    }
   } else {
-    console.warn("Skipping storage check — FIREBASE_PROJECT_ID/FIREBASE_CLIENT_EMAIL/FIREBASE_PRIVATE_KEY/FIREBASE_STORAGE_BUCKET not set.");
+    console.warn("Skipping storage check — R2_ACCOUNT_ID/R2_ACCESS_KEY_ID/R2_SECRET_ACCESS_KEY/R2_BUCKET_NAME not set.");
   }
 
   console.log("Setup complete. Run `npm run dev` and open /setup to create the first admin.");

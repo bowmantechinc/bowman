@@ -1,62 +1,45 @@
 import "server-only";
-import { DeleteObjectCommand, HeadBucketCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-let client: S3Client | null = null;
-
-function getEnv() {
-  const accountId = process.env.R2_ACCOUNT_ID;
-  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
-  const bucket = process.env.R2_BUCKET_NAME;
-  const publicUrl = process.env.R2_PUBLIC_URL;
-  if (!accountId || !accessKeyId || !secretAccessKey || !bucket || !publicUrl) {
-    throw new Error(
-      "Missing R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, or R2_PUBLIC_URL env vars (used for project file attachments)."
-    );
+async function getBucket(): Promise<R2Bucket> {
+  const { env } = await getCloudflareContext({ async: true });
+  if (!env.ATTACHMENTS_BUCKET) {
+    throw new Error("Missing ATTACHMENTS_BUCKET binding. Check the r2_buckets entry in wrangler.jsonc.");
   }
-  return { accountId, accessKeyId, secretAccessKey, bucket, publicUrl: publicUrl.replace(/\/+$/, "") };
+  return env.ATTACHMENTS_BUCKET;
 }
 
-function getClient(accountId: string, accessKeyId: string, secretAccessKey: string): S3Client {
-  if (!client) {
-    client = new S3Client({
-      region: "auto",
-      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-      credentials: { accessKeyId, secretAccessKey },
-    });
+function getPublicUrl(): string {
+  const publicUrl = process.env.R2_PUBLIC_URL;
+  if (!publicUrl) {
+    throw new Error("Missing R2_PUBLIC_URL env var (used to build public links for project file attachments).");
   }
-  return client;
+  return publicUrl.replace(/\/+$/, "");
 }
 
 export async function ensureAttachmentsBucket(): Promise<void> {
-  const { accountId, accessKeyId, secretAccessKey, bucket } = getEnv();
-  await getClient(accountId, accessKeyId, secretAccessKey).send(new HeadBucketCommand({ Bucket: bucket }));
+  // A binding either resolves at Worker startup or it doesn't — no separate
+  // reachability probe is needed the way the S3-API-authenticated client required.
+  await getBucket();
 }
 
 export async function uploadAttachmentFile(
   file: File,
   projectId: string
 ): Promise<{ storagePath: string; publicUrl: string }> {
-  const { accountId, accessKeyId, secretAccessKey, bucket, publicUrl } = getEnv();
+  const bucket = await getBucket();
   const ext = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
   const storagePath = `${projectId}/${crypto.randomUUID()}${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const buffer = await file.arrayBuffer();
 
-  await getClient(accountId, accessKeyId, secretAccessKey).send(
-    new PutObjectCommand({
-      Bucket: bucket,
-      Key: storagePath,
-      Body: buffer,
-      ContentType: file.type || "application/octet-stream",
-    })
-  );
+  await bucket.put(storagePath, buffer, {
+    httpMetadata: { contentType: file.type || "application/octet-stream" },
+  });
 
-  return { storagePath, publicUrl: `${publicUrl}/${storagePath}` };
+  return { storagePath, publicUrl: `${getPublicUrl()}/${storagePath}` };
 }
 
 export async function deleteAttachmentFile(storagePath: string): Promise<void> {
-  const { accountId, accessKeyId, secretAccessKey, bucket } = getEnv();
-  await getClient(accountId, accessKeyId, secretAccessKey).send(
-    new DeleteObjectCommand({ Bucket: bucket, Key: storagePath })
-  );
+  const bucket = await getBucket();
+  await bucket.delete(storagePath);
 }

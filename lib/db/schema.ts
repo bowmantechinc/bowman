@@ -1,5 +1,5 @@
 import "server-only";
-import type { TableSchema as TabSchema } from "@/lib/db/pg-repo";
+import type { TableSchema as TabSchema } from "@/lib/db/d1-repo";
 
 export const MEMBERS_SCHEMA: TabSchema = {
   name: "Members",

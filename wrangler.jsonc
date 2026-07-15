@@ -1,0 +1,57 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "bowman-hub",
+	"main": ".open-next/worker.js",
+	"compatibility_date": "2026-07-15",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"assets": {
+		"binding": "ASSETS",
+		"directory": ".open-next/assets"
+	},
+	"services": [
+		{
+			// Self-reference service binding, the service name must match the worker name
+			// see https://opennext.js.org/cloudflare/caching
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "bowman-hub"
+		}
+	],
+	"observability": {
+		"enabled": true
+	},
+	"upload_source_maps": true,
+	/**
+	 * D1 database.
+	 */
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "bowman_app_db",
+			"database_id": "1a445d47-a132-48f6-973f-d1074343d922",
+			"migrations_dir": "migrations"
+		}
+	],
+	/**
+	 * R2 bucket for project file attachments (same bucket already in use via the S3 API).
+	 */
+	"r2_buckets": [
+		{
+			"binding": "ATTACHMENTS_BUCKET",
+			"bucket_name": "bowman"
+		}
+	],
+	/**
+	 * Non-secret environment variables. Secrets (AUTH_SECRET, RESEND_API_KEY,
+	 * VAPID_PRIVATE_KEY) are set via `wrangler secret put <NAME>` instead.
+	 */
+	"vars": {
+		"R2_PUBLIC_URL": "https://pub-7a75cdd10d5b4f76b154116888da5b88.r2.dev",
+		"NEXT_PUBLIC_VAPID_PUBLIC_KEY": "BEue8BEpjuVAaAps8b-NGnAto9JIP6PdnfyEDuUBHWaSLHeDMhPjP9c9QKkqlHnWYqOBSkj9nN0KKmzf4jf7nQU",
+		"VAPID_PUBLIC_KEY": "BEue8BEpjuVAaAps8b-NGnAto9JIP6PdnfyEDuUBHWaSLHeDMhPjP9c9QKkqlHnWYqOBSkj9nN0KKmzf4jf7nQU",
+		"VAPID_SUBJECT": "mailto:ghemoudz@gmail.com"
+	}
+}

@@ -1,5 +1,5 @@
 import "server-only";
-import { createRepo, type Row } from "@/lib/db/pg-repo";
+import { createRepo, type Row } from "@/lib/db/d1-repo";
 import { NOTIFICATIONS_SCHEMA } from "./schema";
 
 export type NotificationType = "task_assigned" | "task_comment" | "task_status_changed";

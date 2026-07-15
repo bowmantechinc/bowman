@@ -1,0 +1,184 @@
+-- Migration number: 0001 	 2026-07-15T16:38:33.267Z
+
+CREATE TABLE IF NOT EXISTS "Members" (
+  "_seq" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "id" TEXT UNIQUE NOT NULL,
+  "name" TEXT NOT NULL DEFAULT '',
+  "email" TEXT NOT NULL DEFAULT '',
+  "passwordHash" TEXT NOT NULL DEFAULT '',
+  "role" TEXT NOT NULL DEFAULT '',
+  "labelId" TEXT NOT NULL DEFAULT '',
+  "initials" TEXT NOT NULL DEFAULT '',
+  "color" TEXT NOT NULL DEFAULT '',
+  "textColor" TEXT NOT NULL DEFAULT '',
+  "createdAt" TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS "Roles" (
+  "_seq" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "id" TEXT UNIQUE NOT NULL,
+  "label" TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS "Labels" (
+  "_seq" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "id" TEXT UNIQUE NOT NULL,
+  "name" TEXT NOT NULL DEFAULT '',
+  "color" TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS "Projects" (
+  "_seq" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "id" TEXT UNIQUE NOT NULL,
+  "name" TEXT NOT NULL DEFAULT '',
+  "description" TEXT NOT NULL DEFAULT '',
+  "ownerId" TEXT NOT NULL DEFAULT '',
+  "memberIds" TEXT NOT NULL DEFAULT '',
+  "color" TEXT NOT NULL DEFAULT '',
+  "stage" TEXT NOT NULL DEFAULT '',
+  "startDate" TEXT NOT NULL DEFAULT '',
+  "dueDate" TEXT NOT NULL DEFAULT '',
+  "createdAt" TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS "Tasks" (
+  "_seq" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "id" TEXT UNIQUE NOT NULL,
+  "title" TEXT NOT NULL DEFAULT '',
+  "description" TEXT NOT NULL DEFAULT '',
+  "labelId" TEXT NOT NULL DEFAULT '',
+  "priority" TEXT NOT NULL DEFAULT '',
+  "startDate" TEXT NOT NULL DEFAULT '',
+  "dueDate" TEXT NOT NULL DEFAULT '',
+  "ownerId" TEXT NOT NULL DEFAULT '',
+  "projectId" TEXT NOT NULL DEFAULT '',
+  "status" TEXT NOT NULL DEFAULT '',
+  "createdAt" TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS "TaskComments" (
+  "_seq" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "id" TEXT UNIQUE NOT NULL,
+  "taskId" TEXT NOT NULL DEFAULT '',
+  "authorId" TEXT NOT NULL DEFAULT '',
+  "text" TEXT NOT NULL DEFAULT '',
+  "createdAt" TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS "Risks" (
+  "_seq" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "id" TEXT UNIQUE NOT NULL,
+  "projectId" TEXT NOT NULL DEFAULT '',
+  "description" TEXT NOT NULL DEFAULT '',
+  "category" TEXT NOT NULL DEFAULT '',
+  "likelihood" TEXT NOT NULL DEFAULT '',
+  "impact" TEXT NOT NULL DEFAULT '',
+  "level" TEXT NOT NULL DEFAULT '',
+  "ownerId" TEXT NOT NULL DEFAULT '',
+  "mitigation" TEXT NOT NULL DEFAULT '',
+  "createdAt" TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS "Vendors" (
+  "_seq" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "id" TEXT UNIQUE NOT NULL,
+  "name" TEXT NOT NULL DEFAULT '',
+  "contact" TEXT NOT NULL DEFAULT '',
+  "email" TEXT NOT NULL DEFAULT '',
+  "licenseStart" TEXT NOT NULL DEFAULT '',
+  "licenseEnd" TEXT NOT NULL DEFAULT '',
+  "supportLevel" TEXT NOT NULL DEFAULT '',
+  "notes" TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS "Resources" (
+  "_seq" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "id" TEXT UNIQUE NOT NULL,
+  "name" TEXT NOT NULL DEFAULT '',
+  "icon" TEXT NOT NULL DEFAULT '',
+  "detail" TEXT NOT NULL DEFAULT '',
+  "progress" TEXT NOT NULL DEFAULT '',
+  "color" TEXT NOT NULL DEFAULT '',
+  "label" TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS "Attachments" (
+  "_seq" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "id" TEXT UNIQUE NOT NULL,
+  "projectId" TEXT NOT NULL DEFAULT '',
+  "name" TEXT NOT NULL DEFAULT '',
+  "mimeType" TEXT NOT NULL DEFAULT '',
+  "size" TEXT NOT NULL DEFAULT '',
+  "storagePath" TEXT NOT NULL DEFAULT '',
+  "publicUrl" TEXT NOT NULL DEFAULT '',
+  "uploadedBy" TEXT NOT NULL DEFAULT '',
+  "createdAt" TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS "Invites" (
+  "_seq" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "id" TEXT UNIQUE NOT NULL,
+  "email" TEXT NOT NULL DEFAULT '',
+  "role" TEXT NOT NULL DEFAULT '',
+  "labelId" TEXT NOT NULL DEFAULT '',
+  "projectId" TEXT NOT NULL DEFAULT '',
+  "invitedBy" TEXT NOT NULL DEFAULT '',
+  "status" TEXT NOT NULL DEFAULT '',
+  "createdAt" TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS "Activity" (
+  "_seq" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "id" TEXT UNIQUE NOT NULL,
+  "icon" TEXT NOT NULL DEFAULT '',
+  "text" TEXT NOT NULL DEFAULT '',
+  "actorId" TEXT NOT NULL DEFAULT '',
+  "createdAt" TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS "KnowledgeArticles" (
+  "_seq" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "id" TEXT UNIQUE NOT NULL,
+  "title" TEXT NOT NULL DEFAULT '',
+  "body" TEXT NOT NULL DEFAULT '',
+  "tags" TEXT NOT NULL DEFAULT '',
+  "linkedView" TEXT NOT NULL DEFAULT '',
+  "createdBy" TEXT NOT NULL DEFAULT '',
+  "updatedAt" TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS "Notifications" (
+  "_seq" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "id" TEXT UNIQUE NOT NULL,
+  "memberId" TEXT NOT NULL DEFAULT '',
+  "projectId" TEXT NOT NULL DEFAULT '',
+  "taskId" TEXT NOT NULL DEFAULT '',
+  "type" TEXT NOT NULL DEFAULT '',
+  "title" TEXT NOT NULL DEFAULT '',
+  "body" TEXT NOT NULL DEFAULT '',
+  "url" TEXT NOT NULL DEFAULT '',
+  "read" TEXT NOT NULL DEFAULT '',
+  "createdAt" TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS "PushSubscriptions" (
+  "_seq" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "id" TEXT UNIQUE NOT NULL,
+  "memberId" TEXT NOT NULL DEFAULT '',
+  "endpoint" TEXT NOT NULL DEFAULT '',
+  "p256dh" TEXT NOT NULL DEFAULT '',
+  "auth" TEXT NOT NULL DEFAULT '',
+  "createdAt" TEXT NOT NULL DEFAULT ''
+);
+
+INSERT OR IGNORE INTO "Roles" ("id", "label") VALUES
+  ('admin', 'Admin'),
+  ('lead', 'Lead'),
+  ('member', 'Member'),
+  ('viewer', 'Viewer');
+
+INSERT OR IGNORE INTO "Labels" ("id", "name", "color") VALUES
+  ('general', 'General', 'blue'),
+  ('design', 'Design', 'purple'),
+  ('engineering', 'Engineering', 'teal'),
+  ('marketing', 'Marketing', 'amber');

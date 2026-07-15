@@ -1,5 +1,5 @@
 import "server-only";
-import { getSql } from "./pg-client";
+import { getDb } from "./d1-client";
 
 export type Row = Record<string, string>;
 
@@ -21,25 +21,9 @@ function rowToObject(row: Record<string, unknown>, headers: string[]): Row {
   return obj;
 }
 
-export async function ensureTables(schemas: TableSchema[]): Promise<void> {
-  const sql = getSql();
-  for (const schema of schemas) {
-    const cols = schema.headers
-      .map((h, i) =>
-        i === 0
-          ? `${quoteIdent(h)} TEXT PRIMARY KEY`
-          : `${quoteIdent(h)} TEXT NOT NULL DEFAULT ''`
-      )
-      .join(", ");
-    await sql.unsafe(
-      `CREATE TABLE IF NOT EXISTS ${quoteIdent(schema.name)} (_seq BIGSERIAL, ${cols})`
-    );
-  }
-}
-
 // Short-lived, write-invalidated cache so a page that reads the same table
 // multiple times in one render (or across a couple of nearby requests)
-// doesn't round-trip to Postgres each time.
+// doesn't round-trip to D1 each time.
 const rowsCache = new Map<string, { at: number; rows: Row[] }>();
 const ROWS_CACHE_TTL_MS = 10_000;
 
@@ -52,36 +36,34 @@ export async function listRows(tab: string, headers: string[]): Promise<Row[]> {
   if (cached && Date.now() - cached.at < ROWS_CACHE_TTL_MS) {
     return cached.rows;
   }
-  const sql = getSql();
+  const db = await getDb();
   const colList = headers.map(quoteIdent).join(", ");
-  const result = await sql.unsafe(
-    `SELECT ${colList} FROM ${quoteIdent(tab)} ORDER BY _seq`
-  );
-  const rows = result.map((r) => rowToObject(r as Record<string, unknown>, headers));
+  const result = await db.prepare(`SELECT ${colList} FROM ${quoteIdent(tab)} ORDER BY _seq`).all();
+  const rows = result.results.map((r) => rowToObject(r as Record<string, unknown>, headers));
   rowsCache.set(tab, { at: Date.now(), rows });
   return rows;
 }
 
 export async function getRow(tab: string, headers: string[], id: string): Promise<Row | null> {
-  const sql = getSql();
+  const db = await getDb();
   const colList = headers.map(quoteIdent).join(", ");
-  const result = await sql.unsafe(
-    `SELECT ${colList} FROM ${quoteIdent(tab)} WHERE ${quoteIdent(headers[0])} = $1`,
-    [id]
-  );
-  if (!result.length) return null;
-  return rowToObject(result[0] as Record<string, unknown>, headers);
+  const result = await db
+    .prepare(`SELECT ${colList} FROM ${quoteIdent(tab)} WHERE ${quoteIdent(headers[0])} = ?`)
+    .bind(id)
+    .first();
+  if (!result) return null;
+  return rowToObject(result as Record<string, unknown>, headers);
 }
 
 export async function createRow(tab: string, headers: string[], data: Row): Promise<Row> {
-  const sql = getSql();
+  const db = await getDb();
   const cols = headers.map(quoteIdent).join(", ");
-  const placeholders = headers.map((_, i) => `$${i + 1}`).join(", ");
+  const placeholders = headers.map(() => "?").join(", ");
   const params = headers.map((h) => data[h] ?? "");
-  await sql.unsafe(
-    `INSERT INTO ${quoteIdent(tab)} (${cols}) VALUES (${placeholders})`,
-    params
-  );
+  await db
+    .prepare(`INSERT INTO ${quoteIdent(tab)} (${cols}) VALUES (${placeholders})`)
+    .bind(...params)
+    .run();
   invalidateRowsCache(tab);
   return data;
 }
@@ -95,21 +77,21 @@ export async function updateRow(
   const existing = await getRow(tab, headers, id);
   if (!existing) throw new Error(`Row with id "${id}" not found in ${tab}`);
   const merged: Row = { ...existing, ...patch, id };
-  const sql = getSql();
+  const db = await getDb();
   const otherHeaders = headers.filter((h) => h !== headers[0]);
-  const setClauses = otherHeaders.map((h, i) => `${quoteIdent(h)} = $${i + 2}`).join(", ");
-  const params = [id, ...otherHeaders.map((h) => merged[h] ?? "")];
-  await sql.unsafe(
-    `UPDATE ${quoteIdent(tab)} SET ${setClauses} WHERE ${quoteIdent(headers[0])} = $1`,
-    params
-  );
+  const setClauses = otherHeaders.map((h) => `${quoteIdent(h)} = ?`).join(", ");
+  const params = [...otherHeaders.map((h) => merged[h] ?? ""), id];
+  await db
+    .prepare(`UPDATE ${quoteIdent(tab)} SET ${setClauses} WHERE ${quoteIdent(headers[0])} = ?`)
+    .bind(...params)
+    .run();
   invalidateRowsCache(tab);
   return merged;
 }
 
 export async function deleteRow(tab: string, id: string): Promise<void> {
-  const sql = getSql();
-  await sql.unsafe(`DELETE FROM ${quoteIdent(tab)} WHERE "id" = $1`, [id]);
+  const db = await getDb();
+  await db.prepare(`DELETE FROM ${quoteIdent(tab)} WHERE "id" = ?`).bind(id).run();
   invalidateRowsCache(tab);
 }
 

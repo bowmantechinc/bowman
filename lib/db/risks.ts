@@ -1,5 +1,5 @@
 import "server-only";
-import { createRepo, type Row } from "@/lib/db/pg-repo";
+import { createRepo, type Row } from "@/lib/db/d1-repo";
 import { RISKS_SCHEMA } from "./schema";
 import { RISK_LEVELS, type RiskLevel } from "@/lib/constants";
 

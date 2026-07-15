@@ -1,5 +1,5 @@
 import "server-only";
-import { createRepo, type Row } from "@/lib/db/pg-repo";
+import { createRepo, type Row } from "@/lib/db/d1-repo";
 import { PROJECTS_SCHEMA } from "./schema";
 import { toCsv, fromCsv } from "./helpers";
 import { PROJECT_STAGES, type ProjectStage } from "@/lib/constants";

@@ -29,6 +29,8 @@ const ALL_SCHEMAS: TableSchema[] = [
   { name: "Invites", headers: ["id", "email", "role", "labelId", "projectId", "invitedBy", "status", "createdAt"] },
   { name: "Activity", headers: ["id", "icon", "text", "actorId", "createdAt"] },
   { name: "KnowledgeArticles", headers: ["id", "title", "body", "tags", "linkedView", "createdBy", "updatedAt"] },
+  { name: "Notifications", headers: ["id", "memberId", "projectId", "taskId", "type", "title", "body", "url", "read", "createdAt"] },
+  { name: "PushSubscriptions", headers: ["id", "memberId", "endpoint", "p256dh", "auth", "createdAt"] },
 ];
 
 const DEFAULT_ROLES = [

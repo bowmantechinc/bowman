@@ -33,11 +33,15 @@ Fill in:
 - `POSTGRES_URL` — the pooled connection string from step 1.
 - `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` — from step 1, used for project file attachments.
 - `AUTH_SECRET` — a random secret for signing session cookies: `openssl rand -base64 32`.
-- `RESEND_API_KEY` — needed to send member invitation emails. Sign up free at
-  [resend.com](https://resend.com), create an API key, and paste it in. Without a
-  verified sending domain, Resend still delivers from `onboarding@resend.dev` to any
-  recipient — fine for getting started. `RESEND_FROM_EMAIL` and `NEXT_PUBLIC_APP_URL`
-  are optional overrides (see comments in `.env.local.example`).
+- `RESEND_API_KEY` — needed to send member invitation and task notification emails.
+  Sign up free at [resend.com](https://resend.com), create an API key, and paste it in.
+  Without a verified sending domain, Resend still delivers from `onboarding@resend.dev`
+  to any recipient — fine for getting started. `RESEND_FROM_EMAIL` and
+  `NEXT_PUBLIC_APP_URL` are optional overrides (see comments in `.env.local.example`).
+- `VAPID_PUBLIC_KEY` / `NEXT_PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT`
+  — needed for desktop push notifications. Generate a keypair with
+  `npx web-push generate-vapid-keys`; set both public key vars to the same value
+  (it isn't secret), and `VAPID_SUBJECT` to a `mailto:` contact address.
 
 ### 3. Create the database tables and storage bucket
 
@@ -73,6 +77,11 @@ and (optionally) a project to add them to as soon as they accept.
 - **Invitations** (`lib/actions/invites.ts`) send email via Resend with a link to
   `/accept-invite/[id]`, where the invitee sets their name/password and — if a project
   was picked — is added to it automatically on acceptance.
+- **Notifications** (`lib/notify.ts`) fan out to every other member of a project when a
+  task is assigned, commented on, or its status changes: an in-app bell (top-right header),
+  a desktop push notification (Web Push + a service worker at `public/sw.js`), and an email
+  via Resend. Push subscriptions and notification history live in the `PushSubscriptions`
+  and `Notifications` tables.
 - **File attachments** (`lib/supabase/storage.ts`) upload to a public Supabase Storage
   bucket, server-side only, via the `service_role` key — the upload/delete API routes
   never expose that key to the browser.

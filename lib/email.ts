@@ -65,6 +65,39 @@ export async function sendInviteEmail(opts: {
   }
 }
 
+export async function sendTaskNotificationEmail(opts: {
+  to: string;
+  title: string;
+  body: string;
+  url: string;
+}): Promise<void> {
+  const { to, title, body, url } = opts;
+  const resend = getClient();
+
+  const html = `
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;color:#18181b">
+      <div style="font-size:16px;font-weight:700;margin-bottom:24px">${SITE_NAME}</div>
+      <p style="font-size:15px;line-height:1.6">${escapeHtml(body)}</p>
+      <p style="margin:28px 0">
+        <a href="${url}" style="background:#18181b;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:500;display:inline-block">
+          View in ${SITE_NAME}
+        </a>
+      </p>
+    </div>
+  `.trim();
+
+  const { error } = await resend.emails.send({
+    from: fromAddress(),
+    to,
+    subject: title,
+    html,
+  });
+
+  if (error) {
+    throw new Error(error.message || "Failed to send notification email.");
+  }
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[c]!);
 }

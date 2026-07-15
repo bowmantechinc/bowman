@@ -139,6 +139,27 @@ export const KNOWLEDGE_SCHEMA: TabSchema = {
   headers: ["id", "title", "body", "tags", "linkedView", "createdBy", "updatedAt"],
 };
 
+export const NOTIFICATIONS_SCHEMA: TabSchema = {
+  name: "Notifications",
+  headers: [
+    "id",
+    "memberId",
+    "projectId",
+    "taskId",
+    "type",
+    "title",
+    "body",
+    "url",
+    "read",
+    "createdAt",
+  ],
+};
+
+export const PUSH_SUBSCRIPTIONS_SCHEMA: TabSchema = {
+  name: "PushSubscriptions",
+  headers: ["id", "memberId", "endpoint", "p256dh", "auth", "createdAt"],
+};
+
 export const ALL_SCHEMAS: TabSchema[] = [
   MEMBERS_SCHEMA,
   ROLES_SCHEMA,
@@ -153,4 +174,6 @@ export const ALL_SCHEMAS: TabSchema[] = [
   INVITES_SCHEMA,
   ACTIVITY_SCHEMA,
   KNOWLEDGE_SCHEMA,
+  NOTIFICATIONS_SCHEMA,
+  PUSH_SUBSCRIPTIONS_SCHEMA,
 ];

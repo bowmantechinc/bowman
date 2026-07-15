@@ -5,8 +5,17 @@ import { revalidatePath } from "next/cache";
 import { requireSession } from "@/lib/auth/dal";
 import { tasksRepo, TASK_STATUSES, TASK_PRIORITIES } from "@/lib/db/tasks";
 import { taskCommentsRepo } from "@/lib/db/taskComments";
+import { membersRepo } from "@/lib/db/members";
 import { logActivity } from "@/lib/db/activity";
+import { notifyProjectMembers } from "@/lib/notify";
 import type { ActionState } from "./types";
+
+const STATUS_LABEL: Record<string, string> = {
+  backlog: "Backlog",
+  inprogress: "In Progress",
+  review: "Review",
+  done: "Done",
+};
 
 const taskSchema = z.object({
   title: z.string().trim().min(1, { error: "Task title is required." }),
@@ -36,6 +45,21 @@ export async function createTask(
 
   await logActivity("Plus", `${session.name} created task "${task.title}"`, session.sub);
 
+  try {
+    const owner = await membersRepo.get(task.ownerId);
+    await notifyProjectMembers({
+      projectId: task.projectId,
+      actorId: session.sub,
+      type: "task_assigned",
+      title: "New task assigned",
+      body: `${session.name} assigned "${task.title}" to ${owner?.name ?? "a teammate"}`,
+      url: `/tasks?project=${task.projectId}`,
+      taskId: task.id,
+    });
+  } catch {
+    // Best-effort; the task is already created regardless.
+  }
+
   revalidatePath("/tasks");
   revalidatePath("/timeline");
   revalidatePath("/dashboard");
@@ -47,14 +71,33 @@ export async function updateTask(
   _prevState: ActionState | undefined,
   formData: FormData
 ): Promise<ActionState> {
-  await requireSession();
+  const session = await requireSession();
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Missing task id." };
 
   const parsed = taskSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
 
+  const existing = await tasksRepo.get(id);
   await tasksRepo.update(id, parsed.data);
+
+  if (existing && existing.ownerId !== parsed.data.ownerId) {
+    try {
+      const owner = await membersRepo.get(parsed.data.ownerId);
+      await notifyProjectMembers({
+        projectId: parsed.data.projectId,
+        actorId: session.sub,
+        type: "task_assigned",
+        title: "Task reassigned",
+        body: `${session.name} assigned "${parsed.data.title}" to ${owner?.name ?? "a teammate"}`,
+        url: `/tasks?project=${parsed.data.projectId}`,
+        taskId: id,
+      });
+    } catch {
+      // Best-effort; the task is already updated regardless.
+    }
+  }
+
   revalidatePath("/tasks");
   revalidatePath("/timeline");
   revalidatePath("/dashboard");
@@ -63,8 +106,26 @@ export async function updateTask(
 }
 
 export async function updateTaskStatus(id: string, status: (typeof TASK_STATUSES)[number]): Promise<void> {
-  await requireSession();
+  const session = await requireSession();
+  const existing = await tasksRepo.get(id);
+  if (!existing) return;
+
   await tasksRepo.update(id, { status });
+
+  try {
+    await notifyProjectMembers({
+      projectId: existing.projectId,
+      actorId: session.sub,
+      type: "task_status_changed",
+      title: "Task status changed",
+      body: `${session.name} moved "${existing.title}" to ${STATUS_LABEL[status] ?? status}`,
+      url: `/tasks?project=${existing.projectId}`,
+      taskId: id,
+    });
+  } catch {
+    // Best-effort; the status is already updated regardless.
+  }
+
   revalidatePath("/tasks");
   revalidatePath("/dashboard");
 }
@@ -91,6 +152,8 @@ export async function addTaskComment(
   const parsed = commentSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
 
+  const task = await tasksRepo.get(parsed.data.taskId);
+
   await taskCommentsRepo.create({
     id: crypto.randomUUID(),
     taskId: parsed.data.taskId,
@@ -100,6 +163,23 @@ export async function addTaskComment(
   });
 
   await logActivity("MessageCircle", `${session.name} commented on a task`, session.sub);
+
+  if (task) {
+    try {
+      const preview = parsed.data.text.length > 100 ? `${parsed.data.text.slice(0, 100)}…` : parsed.data.text;
+      await notifyProjectMembers({
+        projectId: task.projectId,
+        actorId: session.sub,
+        type: "task_comment",
+        title: "New comment",
+        body: `${session.name} commented on "${task.title}": ${preview}`,
+        url: `/tasks?project=${task.projectId}`,
+        taskId: task.id,
+      });
+    } catch {
+      // Best-effort; the comment is already saved regardless.
+    }
+  }
 
   revalidatePath("/tasks");
   return { ok: true };

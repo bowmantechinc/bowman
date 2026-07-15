@@ -70,7 +70,11 @@ export function TaskDetailDialog({
 
         <div className="flex flex-wrap gap-1.5">
           {label && <ToneBadge tone="blue">{label.name}</ToneBadge>}
-          {project && <ToneBadge tone="gray">{project.name}</ToneBadge>}
+          {project && (
+            <ToneBadge tone="gray" className="max-w-full truncate">
+              {project.name}
+            </ToneBadge>
+          )}
           <ToneBadge tone={TASK_STATUS_TONE[task.status]}>{TASK_STATUS_LABEL[task.status]}</ToneBadge>
           <ToneBadge tone={PRIORITY_TONE[task.priority]}>{task.priority} priority</ToneBadge>
           {task.dueDate && <ToneBadge tone="gray">Due {task.dueDate}</ToneBadge>}

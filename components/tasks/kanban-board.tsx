@@ -72,7 +72,11 @@ function TaskCard({
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
         {label && <ToneBadge tone="blue">{label.name}</ToneBadge>}
-        {project && <ToneBadge tone="gray">{project.name}</ToneBadge>}
+        {project && (
+          <ToneBadge tone="gray" className="max-w-full truncate">
+            {project.name}
+          </ToneBadge>
+        )}
         {task.dueDate && (
           <span className="text-muted-foreground flex items-center gap-0.5 text-[11px]">
             <CalendarDays className="size-3" />

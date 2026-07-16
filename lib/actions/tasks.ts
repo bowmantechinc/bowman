@@ -99,6 +99,36 @@ export async function updateTask(
     }
   }
 
+  if (existing) {
+    const changes: string[] = [];
+    if (existing.status !== parsed.data.status) {
+      changes.push(`status → ${STATUS_LABEL[parsed.data.status] ?? parsed.data.status}`);
+    }
+    if (existing.progress !== parsed.data.progress) {
+      changes.push(`progress → ${parsed.data.progress}%`);
+    }
+    if (existing.priority !== parsed.data.priority) changes.push(`priority → ${parsed.data.priority}`);
+    if (existing.dueDate !== parsed.data.dueDate) changes.push(`due date → ${parsed.data.dueDate || "none"}`);
+    if (existing.title !== parsed.data.title) changes.push("title updated");
+    if (existing.description !== parsed.data.description) changes.push("description updated");
+
+    if (changes.length) {
+      try {
+        await notifyProjectMembers({
+          projectId: parsed.data.projectId,
+          actorId: session.sub,
+          type: "task_updated",
+          title: "Task updated",
+          body: `${session.name} updated "${parsed.data.title}": ${changes.join(", ")}`,
+          url: `/tasks?project=${parsed.data.projectId}`,
+          taskId: id,
+        });
+      } catch {
+        // Best-effort; the task is already updated regardless.
+      }
+    }
+  }
+
   revalidatePath("/tasks");
   revalidatePath("/timeline");
   revalidatePath("/dashboard");

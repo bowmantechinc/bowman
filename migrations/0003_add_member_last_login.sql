@@ -1,0 +1,3 @@
+-- Migration number: 0003 	 2026-07-16T14:15:46.706Z
+
+ALTER TABLE "Members" ADD COLUMN "lastLoginAt" TEXT NOT NULL DEFAULT '';

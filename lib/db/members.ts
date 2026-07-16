@@ -13,6 +13,7 @@ export interface Member {
   color: string;
   textColor: string;
   createdAt: string;
+  lastLoginAt: string;
 }
 
 function toItem(row: Row): Member {
@@ -27,6 +28,7 @@ function toItem(row: Row): Member {
     color: row.color,
     textColor: row.textColor,
     createdAt: row.createdAt,
+    lastLoginAt: row.lastLoginAt,
   };
 }
 
@@ -42,6 +44,7 @@ function toRow(item: Partial<Member>): Row {
   if (item.color !== undefined) row.color = item.color;
   if (item.textColor !== undefined) row.textColor = item.textColor;
   if (item.createdAt !== undefined) row.createdAt = item.createdAt;
+  if (item.lastLoginAt !== undefined) row.lastLoginAt = item.lastLoginAt;
   return row;
 }
 

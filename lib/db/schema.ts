@@ -14,6 +14,7 @@ export const MEMBERS_SCHEMA: TabSchema = {
     "color",
     "textColor",
     "createdAt",
+    "lastLoginAt",
   ],
 };
 

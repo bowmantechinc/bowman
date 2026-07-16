@@ -28,6 +28,23 @@ const ROLE_TONE: Record<string, "purple" | "blue" | "gray" | "green"> = {
   lead: "blue",
 };
 
+const INVITE_STATUS_TONE: Record<string, "amber" | "green" | "red" | "gray"> = {
+  pending: "amber",
+  accepted: "green",
+  revoked: "red",
+};
+
+const INVITE_STATUS_LABEL: Record<string, string> = {
+  pending: "Pending",
+  accepted: "Activated",
+  revoked: "Revoked",
+};
+
+function formatLastLogin(iso: string): string {
+  if (!iso) return "Never logged in";
+  return `Last login ${new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}`;
+}
+
 export default async function MembersPage() {
   const [members, roles, labels, tasks, invites, projects, session] = await Promise.all([
     membersRepo.list(),
@@ -43,9 +60,7 @@ export default async function MembersPage() {
   const isAdmin = session?.role === "admin";
   const roleOptions = roles.map((r) => ({ value: r.id, label: r.label }));
   const labelOptions = labels.map((l) => ({ value: l.id, label: l.name }));
-  const pendingInvites = invites
-    .filter((i) => i.status === "pending")
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const sortedInvites = invites.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   return (
     <div>
@@ -84,6 +99,7 @@ export default async function MembersPage() {
                   <ToneBadge tone={ROLE_TONE[m.role] ?? "gray"}>{roleLabel}</ToneBadge>
                   {label && <ToneBadge tone="gray">{label.name}</ToneBadge>}
                 </div>
+                <div className="text-muted-foreground mb-3 text-[11px]">{formatLastLogin(m.lastLoginAt)}</div>
                 <div className="mb-3 flex gap-4 text-center text-sm">
                   <div className="flex-1">
                     <div className="font-semibold">{mTasks.length}</div>
@@ -133,10 +149,10 @@ export default async function MembersPage() {
       {canManage && (
         <div className="mt-8">
           <h2 className="text-muted-foreground mb-3 text-[11px] font-semibold tracking-wide uppercase">
-            Pending Invitations
+            Invitations
           </h2>
-          {pendingInvites.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No pending invitations.</p>
+          {sortedInvites.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No invitations sent yet.</p>
           ) : (
             <Card className="py-0">
               <Table>
@@ -147,11 +163,12 @@ export default async function MembersPage() {
                     <TableHead>Project</TableHead>
                     <TableHead>Invited by</TableHead>
                     <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pendingInvites.map((inv) => {
+                  {sortedInvites.map((inv) => {
                     const roleLabel = roles.find((r) => r.id === inv.role)?.label ?? inv.role;
                     const project = projects.find((p) => p.id === inv.projectId);
                     return (
@@ -166,17 +183,24 @@ export default async function MembersPage() {
                           {new Date(inv.createdAt).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
-                          <div className="flex justify-end gap-1.5">
-                            <form action={resendInvite.bind(null, inv.id)}>
-                              <Button type="submit" variant="outline" size="icon-sm" title="Resend email">
-                                <RotateCw className="size-3.5" />
-                              </Button>
-                            </form>
-                            <ConfirmDeleteButton
-                              action={revokeInvite.bind(null, inv.id)}
-                              confirmMessage="Revoke this invitation?"
-                            />
-                          </div>
+                          <ToneBadge tone={INVITE_STATUS_TONE[inv.status] ?? "gray"}>
+                            {INVITE_STATUS_LABEL[inv.status] ?? inv.status}
+                          </ToneBadge>
+                        </TableCell>
+                        <TableCell>
+                          {inv.status === "pending" && (
+                            <div className="flex justify-end gap-1.5">
+                              <form action={resendInvite.bind(null, inv.id)}>
+                                <Button type="submit" variant="outline" size="icon-sm" title="Resend email">
+                                  <RotateCw className="size-3.5" />
+                                </Button>
+                              </form>
+                              <ConfirmDeleteButton
+                                action={revokeInvite.bind(null, inv.id)}
+                                confirmMessage="Revoke this invitation?"
+                              />
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     );

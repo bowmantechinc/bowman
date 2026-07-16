@@ -149,6 +149,7 @@ export async function acceptInvite(
   const all = await membersRepo.list();
   const passwordHash = await hashPassword(parsed.data.password);
   const [color, textColor] = pickAvatarColor(all.length);
+  const now = new Date().toISOString();
 
   const member = await membersRepo.create({
     id: crypto.randomUUID(),
@@ -160,7 +161,8 @@ export async function acceptInvite(
     initials: initialsFromName(parsed.data.name),
     color,
     textColor,
-    createdAt: new Date().toISOString(),
+    createdAt: now,
+    lastLoginAt: now,
   });
 
   if (invite.projectId) {

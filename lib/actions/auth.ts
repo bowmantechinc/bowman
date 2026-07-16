@@ -36,6 +36,8 @@ export async function loginAction(
   const ok = await verifyPassword(parsed.data.password, member.passwordHash);
   if (!ok) return { error: "Incorrect email or password." };
 
+  await membersRepo.update(member.id, { lastLoginAt: new Date().toISOString() });
+
   await setSessionCookie({
     sub: member.id,
     name: member.name,
@@ -88,6 +90,7 @@ export async function bootstrapAction(
   const passwordHash = await hashPassword(password);
   const id = crypto.randomUUID();
   const [color, textColor] = pickAvatarColor(0);
+  const now = new Date().toISOString();
 
   const admin = await membersRepo.create({
     id,
@@ -99,7 +102,8 @@ export async function bootstrapAction(
     initials: initialsFromName(name),
     color,
     textColor,
-    createdAt: new Date().toISOString(),
+    createdAt: now,
+    lastLoginAt: now,
   });
 
   await logActivity("UserPlus", `${admin.name} created the workspace`, admin.id);

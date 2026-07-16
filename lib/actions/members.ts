@@ -49,6 +49,7 @@ export async function createMember(
     color,
     textColor,
     createdAt: new Date().toISOString(),
+    lastLoginAt: "",
   });
 
   await logActivity("UserPlus", `${session.name} added ${member.name} (${member.role})`, session.sub);

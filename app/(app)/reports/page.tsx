@@ -9,6 +9,7 @@ import { ToneBadge, PROJECT_STAGE_TONE, TASK_STATUS_TONE, TASK_STATUS_LABEL } fr
 import { MemberAvatar } from "@/components/member-avatar";
 import { ProjectPicker } from "@/components/reports/project-picker";
 import { PrintReportButton } from "@/components/reports/print-report-button";
+import { ExportPdfButton } from "@/components/reports/export-pdf-button";
 import { projectsRepo } from "@/lib/db/projects";
 import { tasksRepo } from "@/lib/db/tasks";
 import { risksRepo } from "@/lib/db/risks";
@@ -50,6 +51,8 @@ export default async function ReportsPage({
     dateStyle: "medium",
     timeStyle: "short",
   });
+  const fileSlug = selected.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  const fileName = `${fileSlug || "project"}-report-${new Date().toISOString().slice(0, 10)}.pdf`;
 
   return (
     <div>
@@ -60,12 +63,13 @@ export default async function ReportsPage({
           <>
             <ProjectPicker projects={projects} selectedId={selected.id} />
             <PrintReportButton />
+            <ExportPdfButton targetId="report-content" fileName={fileName} />
           </>
         }
         className="print:hidden"
       />
 
-      <div className="space-y-4">
+      <div id="report-content" className="space-y-4">
         <div className="hidden print:block print:mb-4">
           <p className="text-muted-foreground text-xs">Generated {generatedAt}</p>
         </div>

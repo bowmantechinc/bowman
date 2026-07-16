@@ -72,7 +72,7 @@ export function RiskFormDialog({
               <Label htmlFor="projectId">Project</Label>
               <Select name="projectId" defaultValue={risk?.projectId ?? defaultProjectId ?? projects[0]?.id}>
                 <SelectTrigger id="projectId" className="w-full">
-                  <SelectValue />
+                  <SelectValue>{(id: string) => projects.find((p) => p.id === id)?.name}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {projects.map((p) => (
@@ -139,7 +139,7 @@ export function RiskFormDialog({
             <Label htmlFor="ownerId">Owner</Label>
             <Select name="ownerId" defaultValue={risk?.ownerId ?? members[0]?.id}>
               <SelectTrigger id="ownerId" className="w-full">
-                <SelectValue />
+                <SelectValue>{(id: string) => members.find((m) => m.id === id)?.name}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {members.map((m) => (

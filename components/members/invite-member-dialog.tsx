@@ -75,7 +75,7 @@ export function InviteMemberDialog({
                 <Label htmlFor="invite-role">Role</Label>
                 <Select name="role" defaultValue={roles.find((r) => r.id === "member")?.id ?? roles[0]?.id}>
                   <SelectTrigger id="invite-role" className="w-full">
-                    <SelectValue />
+                    <SelectValue>{(id: string) => roles.find((r) => r.id === id)?.label}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {roles.map((r) => (
@@ -90,7 +90,7 @@ export function InviteMemberDialog({
                 <Label htmlFor="invite-label">Label</Label>
                 <Select name="labelId" defaultValue={labels[0]?.id ?? ""}>
                   <SelectTrigger id="invite-label" className="w-full">
-                    <SelectValue />
+                    <SelectValue>{(id: string) => labels.find((l) => l.id === id)?.name}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {labels.map((l) => (
@@ -106,7 +106,11 @@ export function InviteMemberDialog({
               <Label htmlFor="invite-project">Project (optional)</Label>
               <Select name="projectId" defaultValue="none">
                 <SelectTrigger id="invite-project" className="w-full">
-                  <SelectValue />
+                  <SelectValue>
+                    {(id: string) =>
+                      id === "none" ? "No project — workspace only" : projects.find((p) => p.id === id)?.name
+                    }
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">No project — workspace only</SelectItem>

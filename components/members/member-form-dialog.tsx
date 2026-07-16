@@ -93,7 +93,7 @@ export function MemberFormDialog({
                 <Label htmlFor="role">Role</Label>
                 <Select name="role" defaultValue={member?.role ?? roles.find((r) => r.id === "member")?.id ?? roles[0]?.id}>
                   <SelectTrigger id="role" className="w-full">
-                    <SelectValue />
+                    <SelectValue>{(id: string) => roles.find((r) => r.id === id)?.label}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {roles.map((r) => (
@@ -108,7 +108,7 @@ export function MemberFormDialog({
                 <Label htmlFor="labelId">Label</Label>
                 <Select name="labelId" defaultValue={member?.labelId ?? labels[0]?.id ?? ""}>
                   <SelectTrigger id="labelId" className="w-full">
-                    <SelectValue />
+                    <SelectValue>{(id: string) => labels.find((l) => l.id === id)?.name}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {labels.map((l) => (

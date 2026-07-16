@@ -199,7 +199,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   <input type="hidden" name="projectId" value={project.id} />
                   <Select name="memberId" defaultValue={availableMembers[0]?.id}>
                     <SelectTrigger className="flex-1">
-                      <SelectValue />
+                      <SelectValue>{(id: string) => availableMembers.find((m) => m.id === id)?.name}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {availableMembers.map((m) => (

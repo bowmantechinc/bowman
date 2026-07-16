@@ -90,7 +90,9 @@ export function TaskFormDialog({
               <Label htmlFor="projectId">Project</Label>
               <Select name="projectId" defaultValue={task?.projectId ?? defaultProjectId ?? projects[0]?.id}>
                 <SelectTrigger id="projectId" className="w-full">
-                  <SelectValue placeholder="Choose project" />
+                  <SelectValue placeholder="Choose project">
+                    {(id: string) => projects.find((p) => p.id === id)?.name}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {projects.map((p) => (
@@ -105,7 +107,9 @@ export function TaskFormDialog({
               <Label htmlFor="ownerId">Assignee</Label>
               <Select name="ownerId" defaultValue={task?.ownerId || members[0]?.id}>
                 <SelectTrigger id="ownerId" className="w-full">
-                  <SelectValue placeholder="Assign to" />
+                  <SelectValue placeholder="Assign to">
+                    {(id: string) => members.find((m) => m.id === id)?.name}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {members.map((m) => (
@@ -122,7 +126,9 @@ export function TaskFormDialog({
               <Label htmlFor="labelId">Label</Label>
               <Select name="labelId" defaultValue={task?.labelId ?? labels[0]?.id ?? ""}>
                 <SelectTrigger id="labelId" className="w-full">
-                  <SelectValue placeholder="Choose label" />
+                  <SelectValue placeholder="Choose label">
+                    {(id: string) => labels.find((l) => l.id === id)?.name}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {labels.map((l) => (
@@ -164,7 +170,7 @@ export function TaskFormDialog({
               <Label htmlFor="status">Stage</Label>
               <Select name="status" defaultValue={task?.status ?? defaultStatus ?? "backlog"}>
                 <SelectTrigger id="status" className="w-full">
-                  <SelectValue />
+                  <SelectValue>{(status: string) => TASK_STATUS_LABEL[status] ?? status}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {TASK_STATUSES.map((s) => (

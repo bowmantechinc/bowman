@@ -72,7 +72,9 @@ export function ProjectFormDialog({ members, project }: { members: Member[]; pro
               <Label htmlFor="ownerId">Owner</Label>
               <Select name="ownerId" defaultValue={project?.ownerId ?? members[0]?.id}>
                 <SelectTrigger id="ownerId" className="w-full">
-                  <SelectValue placeholder="Choose owner" />
+                  <SelectValue placeholder="Choose owner">
+                    {(id: string) => members.find((m) => m.id === id)?.name}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {members.map((m) => (

@@ -23,7 +23,7 @@ export function InlineSelectAction({
       onValueChange={(v) => v && startTransition(() => action(v))}
     >
       <SelectTrigger size="sm" className={className}>
-        <SelectValue />
+        <SelectValue>{(v: string) => options.find((o) => o.value === v)?.label}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         {options.map((o) => (

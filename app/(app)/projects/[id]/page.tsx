@@ -6,12 +6,12 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToneBadge, PROJECT_STAGE_TONE, TASK_STATUS_TONE, TASK_STATUS_LABEL, RISK_LEVEL_TONE } from "@/components/tone-badge";
 import { MemberAvatar } from "@/components/member-avatar";
 import { EmptyState } from "@/components/empty-state";
 import { ProjectFormDialog } from "@/components/projects/project-form-dialog";
 import { AttachmentsCard } from "@/components/projects/attachments-card";
+import { MemberSelect } from "@/components/projects/member-select";
 import { projectsRepo } from "@/lib/db/projects";
 import { tasksRepo } from "@/lib/db/tasks";
 import { risksRepo } from "@/lib/db/risks";
@@ -197,18 +197,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               {canManage && availableMembers.length > 0 && (
                 <form action={addProjectMemberFromForm} className="flex items-center gap-2 border-t pt-3">
                   <input type="hidden" name="projectId" value={project.id} />
-                  <Select name="memberId" defaultValue={availableMembers[0]?.id}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue>{(id: string) => availableMembers.find((m) => m.id === id)?.name}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableMembers.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>
-                          {m.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <MemberSelect members={availableMembers} />
                   <Button type="submit" size="sm" variant="outline">
                     Add
                   </Button>

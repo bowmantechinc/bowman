@@ -16,6 +16,7 @@ import { risksRepo } from "@/lib/db/risks";
 import { membersRepo } from "@/lib/db/members";
 import { computeProjectReport } from "@/lib/reports";
 import { TASK_STATUSES } from "@/lib/constants";
+import { getSession } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Reports" };
 
@@ -25,11 +26,12 @@ export default async function ReportsPage({
   searchParams: Promise<{ project?: string }>;
 }) {
   const { project: projectId } = await searchParams;
-  const [projects, tasks, risks, members] = await Promise.all([
+  const [projects, tasks, risks, members, session] = await Promise.all([
     projectsRepo.list(),
     tasksRepo.list(),
     risksRepo.list(),
     membersRepo.list(),
+    getSession(),
   ]);
 
   if (projects.length === 0) {
@@ -51,8 +53,6 @@ export default async function ReportsPage({
     dateStyle: "medium",
     timeStyle: "short",
   });
-  const fileSlug = selected.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-  const fileName = `${fileSlug || "project"}-report-${new Date().toISOString().slice(0, 10)}.pdf`;
 
   return (
     <div>
@@ -63,7 +63,7 @@ export default async function ReportsPage({
           <>
             <ProjectPicker projects={projects} selectedId={selected.id} />
             <PrintReportButton />
-            <ExportPdfButton targetId="report-content" fileName={fileName} />
+            <ExportPdfButton report={report} generatedBy={session?.name ?? "Bowman Hub"} />
           </>
         }
         className="print:hidden"

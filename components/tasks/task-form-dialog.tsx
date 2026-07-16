@@ -103,7 +103,7 @@ export function TaskFormDialog({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="ownerId">Assignee</Label>
-              <Select name="ownerId" defaultValue={task?.ownerId ?? members[0]?.id}>
+              <Select name="ownerId" defaultValue={task?.ownerId || members[0]?.id}>
                 <SelectTrigger id="ownerId" className="w-full">
                   <SelectValue placeholder="Assign to" />
                 </SelectTrigger>

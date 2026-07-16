@@ -19,9 +19,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex h-screen overflow-hidden">
       <PushSubscribeSetup />
-      <SidebarNav role={session.role} />
+      <SidebarNav role={session.role} className="print:hidden" />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-13 shrink-0 items-center justify-end gap-2 border-b px-4">
+        <header className="flex h-13 shrink-0 items-center justify-end gap-2 border-b px-4 print:hidden">
           <NotificationBell initial={notifications} />
           <ThemeToggle />
           <UserMenu
@@ -33,8 +33,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             textColor={member?.textColor ?? "#1d4ed8"}
           />
         </header>
-        <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-7xl px-6 py-6">{children}</div>
+        <main className="flex-1 overflow-y-auto print:overflow-visible">
+          <div className="mx-auto w-full max-w-7xl px-6 py-6 print:max-w-none print:p-0">{children}</div>
         </main>
       </div>
     </div>

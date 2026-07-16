@@ -5,6 +5,7 @@ import {
   BookOpen,
   KanbanSquare,
   GanttChartSquare,
+  FileBarChart2,
   ShieldAlert,
   Receipt,
   Boxes,
@@ -33,6 +34,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Knowledge Base", href: "/knowledge", icon: BookOpen },
       { label: "Task Board", href: "/tasks", icon: KanbanSquare },
       { label: "Timeline", href: "/timeline", icon: GanttChartSquare },
+      { label: "Reports", href: "/reports", icon: FileBarChart2 },
     ],
   },
   {

@@ -7,11 +7,11 @@ import { NAV_SECTIONS } from "./nav-items";
 import { cn } from "@/lib/utils";
 import { SITE_NAME } from "@/lib/site";
 
-export function SidebarNav({ role }: { role: string }) {
+export function SidebarNav({ role, className }: { role: string; className?: string }) {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-56 shrink-0 flex-col bg-zinc-950 text-white">
+    <aside className={cn("flex h-full w-56 shrink-0 flex-col bg-zinc-950 text-white", className)}>
       <div className="flex items-center gap-2.5 border-b border-white/10 px-4 py-4">
         <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
           <Compass className="size-4" />

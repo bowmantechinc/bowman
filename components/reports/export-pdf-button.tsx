@@ -16,8 +16,11 @@ const STATUS_LABEL: Record<string, string> = {
 
 const INK = "#18181b";
 const MUTED = "#71717a";
-const RULE = "#d4d4d8";
+const RULE = "#e4e4e7";
 const ACCENT = "#18181b";
+const ACCENT_RGB: [number, number, number] = [24, 24, 27];
+const SOFT_BG = "#f4f4f5";
+const ZEBRA_RGB: [number, number, number] = [250, 250, 250];
 
 function buildSummary(r: ProjectReport): string {
   const done = r.taskCounts.done ?? 0;
@@ -92,6 +95,8 @@ export function ExportPdfButton({ report, generatedBy }: { report: ProjectReport
         y += 24;
       }
 
+      y += 14;
+
       // Letterhead
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
@@ -144,20 +149,38 @@ export function ExportPdfButton({ report, generatedBy }: { report: ProjectReport
                 ? `${Math.abs(report.daysToDue)} day(s) overdue`
                 : `${report.daysToDue} day(s) remaining`,
           ],
-          ["Overall progress", `${report.progressPct}%`],
         ],
       });
-      y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 20;
+      y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 12;
 
-      // Executive summary
+      // Overall progress — visual bar
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(MUTED);
+      doc.text("OVERALL PROGRESS", margin, y);
+      doc.setTextColor(INK);
+      doc.text(`${report.progressPct}%`, pageWidth - margin, y, { align: "right" });
+      y += 8;
+      const barHeight = 8;
+      doc.setFillColor(SOFT_BG);
+      doc.roundedRect(margin, y, contentWidth, barHeight, 3, 3, "F");
+      const filledWidth = Math.max(barHeight, (contentWidth * Math.min(100, Math.max(0, report.progressPct))) / 100);
+      doc.setFillColor(...ACCENT_RGB);
+      doc.roundedRect(margin, y, filledWidth, barHeight, 3, 3, "F");
+      y += barHeight + 24;
+
+      // Executive summary — shaded callout
       sectionHeading("Executive Summary");
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
+      const summaryLines = doc.splitTextToSize(buildSummary(report), contentWidth - 24);
+      const boxHeight = summaryLines.length * 14 + 20;
+      ensureSpace(boxHeight);
+      doc.setFillColor(SOFT_BG);
+      doc.roundedRect(margin, y, contentWidth, boxHeight, 4, 4, "F");
       doc.setTextColor(INK);
-      const summaryLines = doc.splitTextToSize(buildSummary(report), contentWidth);
-      ensureSpace(summaryLines.length * 14);
-      doc.text(summaryLines, margin, y, { lineHeightFactor: 1.4 });
-      y += summaryLines.length * 14 + 20;
+      doc.text(summaryLines, margin + 12, y + 16, { lineHeightFactor: 1.4 });
+      y += boxHeight + 20;
 
       // Task breakdown
       sectionHeading(`Task Breakdown (${report.totalTasks})`);
@@ -173,6 +196,7 @@ export function ExportPdfButton({ report, generatedBy }: { report: ProjectReport
           margin: { left: margin, right: margin },
           theme: "grid",
           headStyles: { fillColor: [24, 24, 27], textColor: 255, fontSize: 9 },
+          alternateRowStyles: { fillColor: ZEBRA_RGB },
           styles: { fontSize: 9.5, textColor: INK },
           head: [["Status", "Count", "% of total"]],
           body: TASK_STATUSES.map((s) => {
@@ -198,6 +222,7 @@ export function ExportPdfButton({ report, generatedBy }: { report: ProjectReport
           margin: { left: margin, right: margin },
           theme: "grid",
           headStyles: { fillColor: [24, 24, 27], textColor: 255, fontSize: 9 },
+          alternateRowStyles: { fillColor: ZEBRA_RGB },
           styles: { fontSize: 9, textColor: INK },
           head: [["Description", "Category", "Level", "Owner"]],
           body: report.risks.map((r) => [
@@ -224,6 +249,7 @@ export function ExportPdfButton({ report, generatedBy }: { report: ProjectReport
           margin: { left: margin, right: margin },
           theme: "grid",
           headStyles: { fillColor: [24, 24, 27], textColor: 255, fontSize: 9 },
+          alternateRowStyles: { fillColor: ZEBRA_RGB },
           styles: { fontSize: 9.5, textColor: INK },
           head: [["Name", "Role"]],
           body: report.team.map((m) => [m.name, m.role]),
@@ -244,6 +270,7 @@ export function ExportPdfButton({ report, generatedBy }: { report: ProjectReport
           margin: { left: margin, right: margin },
           theme: "grid",
           headStyles: { fillColor: [24, 24, 27], textColor: 255, fontSize: 9 },
+          alternateRowStyles: { fillColor: ZEBRA_RGB },
           styles: { fontSize: 9, textColor: INK },
           head: [["Task", "Owner", "Status", "Progress", "Due"]],
           body: report.tasks.map((t) => [
@@ -256,10 +283,12 @@ export function ExportPdfButton({ report, generatedBy }: { report: ProjectReport
         });
       }
 
-      // Footer on every page
+      // Brand accent bar + footer on every page
       const pageCount = doc.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
+        doc.setFillColor(...ACCENT_RGB);
+        doc.rect(0, 0, pageWidth, 6, "F");
         doc.setDrawColor(RULE);
         doc.line(margin, pageHeight - 40, pageWidth - margin, pageHeight - 40);
         doc.setFont("helvetica", "normal");

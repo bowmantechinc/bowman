@@ -33,7 +33,7 @@ export default async function TimelinePage({
   ]);
 
   const scopedTasks = projectFilter ? tasks.filter((t) => t.projectId === projectFilter) : tasks;
-  const { rows, rangeStartLabel, rangeEndLabel } = computeTimelineRows(scopedTasks, projects, members);
+  const { rows, ticks, todayPos } = computeTimelineRows(scopedTasks, projects, members);
 
   return (
     <div>
@@ -59,11 +59,31 @@ export default async function TimelinePage({
                   Status
                 </th>
                 <th className="text-muted-foreground px-3 py-2.5 text-left text-xs font-semibold tracking-wide uppercase">
-                  <div className="flex items-center justify-between">
-                    <span>Schedule</span>
-                    <span className="text-muted-foreground/70 hidden font-normal normal-case sm:inline">
-                      {rangeStartLabel} – {rangeEndLabel}
-                    </span>
+                  Schedule
+                </th>
+              </tr>
+              <tr className="border-b">
+                <th colSpan={3} className="border-r" />
+                <th className="px-3 pt-1 pb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="relative h-3 flex-1">
+                      {ticks.map((t, i) => (
+                        <span
+                          key={t.pos}
+                          className="text-muted-foreground/70 absolute text-[10px] font-normal normal-case whitespace-nowrap"
+                          style={
+                            i === 0
+                              ? { left: 0 }
+                              : i === ticks.length - 1
+                                ? { right: 0 }
+                                : { left: `${t.pos}%`, transform: "translateX(-50%)" }
+                          }
+                        >
+                          {t.label}
+                        </span>
+                      ))}
+                    </div>
+                    <span className="w-28 shrink-0" />
                   </div>
                 </th>
               </tr>
@@ -89,6 +109,19 @@ export default async function TimelinePage({
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-2">
                       <div className="bg-muted relative h-4 min-w-[240px] flex-1 overflow-hidden rounded">
+                        {ticks.slice(1, -1).map((t) => (
+                          <div
+                            key={t.pos}
+                            className="bg-border/60 absolute top-0 h-full w-px"
+                            style={{ left: `${t.pos}%` }}
+                          />
+                        ))}
+                        {todayPos !== null && (
+                          <div
+                            className="absolute top-0 h-full w-px bg-red-500/70"
+                            style={{ left: `${todayPos}%` }}
+                          />
+                        )}
                         <div
                           className={`absolute top-0 h-4 rounded opacity-80 ${BAR_COLOR_CLASS[r.color] ?? "bg-blue-500"}`}
                           style={{ left: `${r.start}%`, width: `${r.end - r.start}%` }}

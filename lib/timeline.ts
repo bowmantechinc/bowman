@@ -15,13 +15,28 @@ export interface TimelineRow {
   dateLabel: string;
 }
 
+export interface TimelineTick {
+  pos: number; // percent 0-100
+  label: string;
+}
+
 export interface TimelineData {
   rows: TimelineRow[];
   rangeStartLabel: string;
   rangeEndLabel: string;
+  ticks: TimelineTick[];
+  todayPos: number | null; // percent 0-100, null if today falls outside the visible range
 }
 
-const EMPTY_TIMELINE: TimelineData = { rows: [], rangeStartLabel: "", rangeEndLabel: "" };
+const EMPTY_TIMELINE: TimelineData = {
+  rows: [],
+  rangeStartLabel: "",
+  rangeEndLabel: "",
+  ticks: [],
+  todayPos: null,
+};
+
+const TICK_COUNT = 6;
 
 function formatDate(ms: number): string {
   return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric" });
@@ -104,5 +119,13 @@ export function computeTimelineRows(
     });
   }
 
-  return { rows, rangeStartLabel: formatDate(minMs), rangeEndLabel: formatDate(maxMs) };
+  const ticks: TimelineTick[] = Array.from({ length: TICK_COUNT }, (_, i) => {
+    const t = i / (TICK_COUNT - 1);
+    return { pos: t * 100, label: formatDate(minMs + t * (maxMs - minMs)) };
+  });
+
+  const todayMs = today.getTime();
+  const todayPos = todayMs >= minMs && todayMs <= maxMs ? pos(todayMs) : null;
+
+  return { rows, rangeStartLabel: formatDate(minMs), rangeEndLabel: formatDate(maxMs), ticks, todayPos };
 }

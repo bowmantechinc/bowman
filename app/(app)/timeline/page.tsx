@@ -33,7 +33,7 @@ export default async function TimelinePage({
   ]);
 
   const scopedTasks = projectFilter ? tasks.filter((t) => t.projectId === projectFilter) : tasks;
-  const rows = computeTimelineRows(scopedTasks, projects, members);
+  const { rows, rangeStartLabel, rangeEndLabel } = computeTimelineRows(scopedTasks, projects, members);
 
   return (
     <div>
@@ -59,7 +59,12 @@ export default async function TimelinePage({
                   Status
                 </th>
                 <th className="text-muted-foreground px-3 py-2.5 text-left text-xs font-semibold tracking-wide uppercase">
-                  Schedule
+                  <div className="flex items-center justify-between">
+                    <span>Schedule</span>
+                    <span className="text-muted-foreground/70 hidden font-normal normal-case sm:inline">
+                      {rangeStartLabel} – {rangeEndLabel}
+                    </span>
+                  </div>
                 </th>
               </tr>
             </thead>
@@ -82,11 +87,16 @@ export default async function TimelinePage({
                     </ToneBadge>
                   </td>
                   <td className="px-3 py-2">
-                    <div className="bg-muted relative h-4 min-w-[240px] overflow-hidden rounded">
-                      <div
-                        className={`absolute top-0 h-4 rounded opacity-80 ${BAR_COLOR_CLASS[r.color] ?? "bg-blue-500"}`}
-                        style={{ left: `${r.start}%`, width: `${r.end - r.start}%` }}
-                      />
+                    <div className="flex items-center gap-2">
+                      <div className="bg-muted relative h-4 min-w-[240px] flex-1 overflow-hidden rounded">
+                        <div
+                          className={`absolute top-0 h-4 rounded opacity-80 ${BAR_COLOR_CLASS[r.color] ?? "bg-blue-500"}`}
+                          style={{ left: `${r.start}%`, width: `${r.end - r.start}%` }}
+                        />
+                      </div>
+                      <span className="text-muted-foreground w-28 shrink-0 text-xs whitespace-nowrap">
+                        {r.dateLabel}
+                      </span>
                     </div>
                   </td>
                 </tr>

@@ -12,15 +12,28 @@ export interface TimelineRow {
   end: number; // percent 0-100
   color: string;
   sub: boolean;
+  dateLabel: string;
+}
+
+export interface TimelineData {
+  rows: TimelineRow[];
+  rangeStartLabel: string;
+  rangeEndLabel: string;
+}
+
+const EMPTY_TIMELINE: TimelineData = { rows: [], rangeStartLabel: "", rangeEndLabel: "" };
+
+function formatDate(ms: number): string {
+  return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
 export function computeTimelineRows(
   tasks: Task[],
   projects: Project[],
   members: Member[]
-): TimelineRow[] {
+): TimelineData {
   const scoped = tasks.filter((t) => t.dueDate);
-  if (!scoped.length) return [];
+  if (!scoped.length) return EMPTY_TIMELINE;
 
   const allMs = scoped.map((t) => new Date(t.dueDate + "T00:00:00").getTime());
   const today = new Date();
@@ -49,8 +62,12 @@ export function computeTimelineRows(
     const project = projects.find((p) => p.id === projectId);
     const sorted = list.slice().sort((a, b) => a.dueDate.localeCompare(b.dueDate));
     const ms = sorted.map((t) => new Date(t.dueDate + "T00:00:00").getTime());
-    const start = pos(Math.min(...ms));
-    const end = Math.max(start + 4, pos(Math.max(...ms)));
+    const minTaskMs = Math.min(...ms);
+    const maxTaskMs = Math.max(...ms);
+    const start = pos(minTaskMs);
+    const end = Math.max(start + 4, pos(maxTaskMs));
+    const groupDateLabel =
+      minTaskMs === maxTaskMs ? formatDate(minTaskMs) : `${formatDate(minTaskMs)} – ${formatDate(maxTaskMs)}`;
     const allDone = sorted.every((t) => t.status === "done");
     const anyActive = sorted.some((t) => t.status === "inprogress" || t.status === "review");
     const groupStatus = allDone ? "done" : anyActive ? "inprogress" : "backlog";
@@ -67,10 +84,12 @@ export function computeTimelineRows(
       end,
       color: project?.color ?? "blue",
       sub: false,
+      dateLabel: groupDateLabel,
     });
 
     sorted.forEach((t) => {
-      const p = pos(new Date(t.dueDate + "T00:00:00").getTime());
+      const taskMs = new Date(t.dueDate + "T00:00:00").getTime();
+      const p = pos(taskMs);
       rows.push({
         key: t.id,
         label: `· ${t.title}`,
@@ -80,9 +99,10 @@ export function computeTimelineRows(
         end: Math.min(100, p + 1.5),
         color: project?.color ?? "blue",
         sub: true,
+        dateLabel: formatDate(taskMs),
       });
     });
   }
 
-  return rows;
+  return { rows, rangeStartLabel: formatDate(minMs), rangeEndLabel: formatDate(maxMs) };
 }

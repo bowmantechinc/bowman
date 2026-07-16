@@ -9,7 +9,7 @@ import { ToneBadge, PROJECT_STAGE_TONE } from "@/components/tone-badge";
 import { MemberAvatar } from "@/components/member-avatar";
 import { ProjectFormDialog } from "@/components/projects/project-form-dialog";
 import { projectsRepo } from "@/lib/db/projects";
-import { tasksRepo } from "@/lib/db/tasks";
+import { tasksRepo, averageProgress } from "@/lib/db/tasks";
 import { membersRepo } from "@/lib/db/members";
 import { isManager } from "@/lib/auth/dal";
 import { getSession } from "@/lib/auth/session";
@@ -45,8 +45,7 @@ export default async function ProjectsPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((p) => {
             const pTasks = tasks.filter((t) => t.projectId === p.id);
-            const done = pTasks.filter((t) => t.status === "done").length;
-            const pct = pTasks.length ? Math.round((done / pTasks.length) * 100) : 0;
+            const pct = averageProgress(pTasks);
             const owner = members.find((m) => m.id === p.ownerId);
             return (
               <Link key={p.id} href={`/projects/${p.id}`}>

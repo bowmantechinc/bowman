@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { ToneBadge, TASK_STATUS_TONE, TASK_STATUS_LABEL, PRIORITY_TONE } from "@/components/tone-badge";
 import { MemberAvatar } from "@/components/member-avatar";
@@ -92,6 +93,11 @@ export function TaskDetailDialog({
           ) : (
             "Unassigned"
           )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Progress value={task.progress} className="h-1.5 flex-1" />
+          <span className="text-muted-foreground text-xs">{task.progress}%</span>
         </div>
 
         <div className="border-t pt-3">

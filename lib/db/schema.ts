@@ -56,6 +56,7 @@ export const TASKS_SCHEMA: TabSchema = {
     "ownerId",
     "projectId",
     "status",
+    "progress",
     "createdAt",
   ],
 };

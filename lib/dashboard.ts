@@ -1,6 +1,6 @@
 import "server-only";
 import { projectsRepo } from "@/lib/db/projects";
-import { tasksRepo } from "@/lib/db/tasks";
+import { tasksRepo, averageProgress } from "@/lib/db/tasks";
 import { risksRepo } from "@/lib/db/risks";
 import { membersRepo } from "@/lib/db/members";
 import { activityRepo } from "@/lib/db/activity";
@@ -44,7 +44,7 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   const totalTasks = tasks.length;
   const doneTasks = tasks.filter((t) => t.status === "done").length;
-  const overallPct = totalTasks ? Math.round((doneTasks / totalTasks) * 100) : 0;
+  const overallPct = averageProgress(tasks);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -52,8 +52,7 @@ export async function getDashboardData(): Promise<DashboardData> {
   const projectRows: ProjectProgressRow[] = projects
     .map((p) => {
       const pTasks = tasks.filter((t) => t.projectId === p.id);
-      const done = pTasks.filter((t) => t.status === "done").length;
-      const pct = pTasks.length ? Math.round((done / pTasks.length) * 100) : 0;
+      const pct = averageProgress(pTasks);
       const overdue = pTasks.some(
         (t) => t.status !== "done" && t.dueDate && new Date(t.dueDate + "T00:00:00") < today
       );

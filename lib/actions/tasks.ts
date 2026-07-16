@@ -27,6 +27,7 @@ const taskSchema = z.object({
   ownerId: z.string().trim().min(1, { error: "Assign this task to someone." }),
   projectId: z.string().trim().min(1, { error: "Choose a project." }),
   status: z.enum(TASK_STATUSES),
+  progress: z.coerce.number().min(0).max(100).default(0),
 });
 
 export async function createTask(
@@ -110,7 +111,7 @@ export async function updateTaskStatus(id: string, status: (typeof TASK_STATUSES
   const existing = await tasksRepo.get(id);
   if (!existing) return;
 
-  await tasksRepo.update(id, { status });
+  await tasksRepo.update(id, status === "done" ? { status, progress: 100 } : { status });
 
   try {
     await notifyProjectMembers({

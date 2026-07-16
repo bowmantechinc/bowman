@@ -159,20 +159,26 @@ export function TaskFormDialog({
               <Input id="dueDate" name="dueDate" type="date" defaultValue={task?.dueDate} />
             </div>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="status">Stage</Label>
-            <Select name="status" defaultValue={task?.status ?? defaultStatus ?? "backlog"}>
-              <SelectTrigger id="status" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TASK_STATUSES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {TASK_STATUS_LABEL[s]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="status">Stage</Label>
+              <Select name="status" defaultValue={task?.status ?? defaultStatus ?? "backlog"}>
+                <SelectTrigger id="status" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TASK_STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {TASK_STATUS_LABEL[s]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="progress">Progress (%)</Label>
+              <Input id="progress" name="progress" type="number" min={0} max={100} defaultValue={task?.progress ?? 0} />
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

@@ -52,6 +52,7 @@
 		"R2_PUBLIC_URL": "https://pub-7a75cdd10d5b4f76b154116888da5b88.r2.dev",
 		"NEXT_PUBLIC_VAPID_PUBLIC_KEY": "BEue8BEpjuVAaAps8b-NGnAto9JIP6PdnfyEDuUBHWaSLHeDMhPjP9c9QKkqlHnWYqOBSkj9nN0KKmzf4jf7nQU",
 		"VAPID_PUBLIC_KEY": "BEue8BEpjuVAaAps8b-NGnAto9JIP6PdnfyEDuUBHWaSLHeDMhPjP9c9QKkqlHnWYqOBSkj9nN0KKmzf4jf7nQU",
-		"VAPID_SUBJECT": "mailto:ghemoudz@gmail.com"
+		"VAPID_SUBJECT": "mailto:ghemoudz@gmail.com",
+		"NEXT_PUBLIC_APP_URL": "https://bowman-hub.bowmantechinc.workers.dev"
 	}
 }

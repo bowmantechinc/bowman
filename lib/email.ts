@@ -1,22 +1,137 @@
 import "server-only";
-import { Resend } from "resend";
 import { SITE_NAME } from "@/lib/site";
 
-let client: Resend | null = null;
+type EmailProvider = "sendgrid" | "gmail";
 
-function getClient(): Resend {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) {
-    throw new Error(
-      "Missing RESEND_API_KEY env var. Create a free key at resend.com and add it to your environment."
-    );
-  }
-  if (!client) client = new Resend(key);
-  return client;
+function getProvider(): EmailProvider {
+  const explicit = process.env.EMAIL_PROVIDER?.toLowerCase();
+  if (explicit === "gmail" || explicit === "sendgrid") return explicit;
+  return process.env.GOOGLE_REFRESH_TOKEN ? "gmail" : "sendgrid";
 }
 
-function fromAddress(): string {
-  return process.env.RESEND_FROM_EMAIL || `${SITE_NAME} <onboarding@resend.dev>`;
+async function sendEmail(opts: { to: string; subject: string; html: string }): Promise<void> {
+  const provider = getProvider();
+  if (provider === "gmail") return sendViaGmail(opts);
+  return sendViaSendGrid(opts);
+}
+
+// --- SendGrid ---
+
+function sendGridFromAddress(): { email: string; name: string } {
+  const raw = process.env.SENDGRID_FROM_EMAIL;
+  if (!raw) {
+    throw new Error(
+      "Missing SENDGRID_FROM_EMAIL env var. Verify a sender at sendgrid.com/settings/sender_auth and add its address here."
+    );
+  }
+  const match = raw.match(/^(.*)<(.+)>$/);
+  return match ? { name: match[1].trim(), email: match[2].trim() } : { name: SITE_NAME, email: raw.trim() };
+}
+
+async function sendViaSendGrid(opts: { to: string; subject: string; html: string }): Promise<void> {
+  const key = process.env.SENDGRID_API_KEY;
+  if (!key) {
+    throw new Error(
+      "Missing SENDGRID_API_KEY env var. Create a free key at sendgrid.com/settings/api_keys and add it to your environment."
+    );
+  }
+
+  const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      personalizations: [{ to: [{ email: opts.to }] }],
+      from: sendGridFromAddress(),
+      subject: opts.subject,
+      content: [{ type: "text/html", value: opts.html }],
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`SendGrid error (${res.status}): ${body || res.statusText}`);
+  }
+}
+
+// --- Gmail (Gmail API via OAuth refresh token) ---
+
+async function getGmailAccessToken(): Promise<string> {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
+  if (!clientId || !clientSecret || !refreshToken) {
+    throw new Error(
+      "Missing GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REFRESH_TOKEN env vars for Gmail sending."
+    );
+  }
+
+  const res = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+      grant_type: "refresh_token",
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Google OAuth token refresh failed (${res.status}): ${body || res.statusText}`);
+  }
+
+  const data = (await res.json()) as { access_token?: string };
+  if (!data.access_token) throw new Error("Google OAuth token refresh returned no access_token.");
+  return data.access_token;
+}
+
+function base64UrlEncode(input: string): string {
+  return Buffer.from(input, "utf-8")
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+function encodeSubject(subject: string): string {
+  return `=?UTF-8?B?${Buffer.from(subject, "utf-8").toString("base64")}?=`;
+}
+
+async function sendViaGmail(opts: { to: string; subject: string; html: string }): Promise<void> {
+  const sender = process.env.GMAIL_SENDER_EMAIL;
+  if (!sender) {
+    throw new Error("Missing GMAIL_SENDER_EMAIL env var — the Gmail address the refresh token authorizes.");
+  }
+
+  const accessToken = await getGmailAccessToken();
+
+  const raw = [
+    `From: ${SITE_NAME} <${sender}>`,
+    `To: ${opts.to}`,
+    `Subject: ${encodeSubject(opts.subject)}`,
+    "MIME-Version: 1.0",
+    'Content-Type: text/html; charset="UTF-8"',
+    "",
+    opts.html,
+  ].join("\r\n");
+
+  const res = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ raw: base64UrlEncode(raw) }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Gmail API error (${res.status}): ${body || res.statusText}`);
+  }
 }
 
 export async function sendInviteEmail(opts: {
@@ -27,7 +142,6 @@ export async function sendInviteEmail(opts: {
   acceptUrl: string;
 }): Promise<void> {
   const { to, inviterName, roleLabel, projectName, acceptUrl } = opts;
-  const resend = getClient();
 
   const subject = projectName
     ? `${inviterName} invited you to "${projectName}" on ${SITE_NAME}`
@@ -53,16 +167,7 @@ export async function sendInviteEmail(opts: {
     </div>
   `.trim();
 
-  const { error } = await resend.emails.send({
-    from: fromAddress(),
-    to,
-    subject,
-    html,
-  });
-
-  if (error) {
-    throw new Error(error.message || "Failed to send invite email.");
-  }
+  await sendEmail({ to, subject, html });
 }
 
 export async function sendTaskNotificationEmail(opts: {
@@ -72,7 +177,6 @@ export async function sendTaskNotificationEmail(opts: {
   url: string;
 }): Promise<void> {
   const { to, title, body, url } = opts;
-  const resend = getClient();
 
   const html = `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;color:#18181b">
@@ -86,16 +190,7 @@ export async function sendTaskNotificationEmail(opts: {
     </div>
   `.trim();
 
-  const { error } = await resend.emails.send({
-    from: fromAddress(),
-    to,
-    subject: title,
-    html,
-  });
-
-  if (error) {
-    throw new Error(error.message || "Failed to send notification email.");
-  }
+  await sendEmail({ to, subject: title, html });
 }
 
 function escapeHtml(s: string): string {

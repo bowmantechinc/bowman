@@ -45,7 +45,8 @@
 		}
 	],
 	/**
-	 * Non-secret environment variables. Secrets (AUTH_SECRET, RESEND_API_KEY,
+	 * Non-secret environment variables. Secrets (AUTH_SECRET, SENDGRID_API_KEY or
+	 * GOOGLE_CLIENT_SECRET/GOOGLE_REFRESH_TOKEN for email,
 	 * VAPID_PRIVATE_KEY) are set via `wrangler secret put <NAME>` instead.
 	 */
 	"vars": {

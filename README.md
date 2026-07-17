@@ -46,11 +46,18 @@ Fill in:
 
 - `R2_PUBLIC_URL` — from step 2.
 - `AUTH_SECRET` — a random secret for signing session cookies: `openssl rand -base64 32`.
-- `RESEND_API_KEY` — needed to send member invitation and task notification emails.
-  Sign up free at [resend.com](https://resend.com), create an API key, and paste it in.
-  Without a verified sending domain, Resend still delivers from `onboarding@resend.dev`
-  to any recipient — fine for getting started. `RESEND_FROM_EMAIL` and
-  `NEXT_PUBLIC_APP_URL` are optional overrides (see comments in `.env.local.example`).
+- Outgoing email (member invitations + task notifications) — pick one provider,
+  set via `EMAIL_PROVIDER` (`sendgrid` or `gmail`; auto-detects `gmail` if
+  `GOOGLE_REFRESH_TOKEN` is set, otherwise `sendgrid`). Without either configured,
+  invites still work via the manual share-link shown when the email send fails.
+  - **SendGrid**: `SENDGRID_API_KEY` / `SENDGRID_FROM_EMAIL`. Sign up free at
+    [sendgrid.com](https://sendgrid.com), create an API key, then verify a sender
+    address under Settings → Sender Authentication (single-sender verification —
+    no domain/DNS setup required) and set `SENDGRID_FROM_EMAIL` to that address.
+  - **Gmail**: `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_REFRESH_TOKEN` /
+    `GMAIL_SENDER_EMAIL` — sends as a real Gmail/Google Workspace address via the
+    Gmail API. See the setup steps in `.env.local.example`.
+  - `NEXT_PUBLIC_APP_URL` is an optional override (see comments in `.env.local.example`).
 - `VAPID_PUBLIC_KEY` / `NEXT_PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT`
   — needed for desktop push notifications. Generate a keypair with
   `npx web-push generate-vapid-keys`; set both public key vars to the same value
@@ -107,13 +114,13 @@ Builds via `@opennextjs/cloudflare` and deploys with `wrangler`. Prints the live
   separate middleware layer — Next.js 16's `proxy.ts` defaults to the Node.js
   runtime, which Cloudflare's adapter doesn't yet support, and since Workers runs
   everything in one runtime anyway there's no performance reason to keep one).
-- **Invitations** (`lib/actions/invites.ts`) send email via Resend with a link to
+- **Invitations** (`lib/actions/invites.ts`) send email via SendGrid with a link to
   `/accept-invite/[id]`, where the invitee sets their name/password and — if a project
   was picked — is added to it automatically on acceptance.
 - **Notifications** (`lib/notify.ts`) fan out to every other member of a project when a
   task is assigned, commented on, or its status changes: an in-app bell (top-right header),
   a desktop push notification (Web Push + a service worker at `public/sw.js`), and an email
-  via Resend. Push subscriptions and notification history live in the `PushSubscriptions`
+  via SendGrid. Push subscriptions and notification history live in the `PushSubscriptions`
   and `Notifications` tables.
 - **File attachments** (`lib/r2/storage.ts`) upload to an R2 bucket via the native
   binding (`env.ATTACHMENTS_BUCKET`), server-side only.
@@ -132,7 +139,7 @@ components/           UI components, grouped by feature
 lib/db/               Typed repositories per table + the D1 client/CRUD layer
 lib/actions/          Server Actions (create/update/delete for each entity)
 lib/r2/                Storage client (project file attachments)
-lib/email.ts           Resend client for invitation and notification emails
+lib/email.ts           SendGrid client for invitation and notification emails
 migrations/            D1 schema migrations (`npm run db:migrate:local` / `:remote`)
 wrangler.jsonc          Cloudflare Worker config: D1/R2 bindings, vars
 open-next.config.ts     OpenNext Cloudflare adapter config

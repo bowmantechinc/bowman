@@ -54,6 +54,9 @@
 		"NEXT_PUBLIC_VAPID_PUBLIC_KEY": "BEue8BEpjuVAaAps8b-NGnAto9JIP6PdnfyEDuUBHWaSLHeDMhPjP9c9QKkqlHnWYqOBSkj9nN0KKmzf4jf7nQU",
 		"VAPID_PUBLIC_KEY": "BEue8BEpjuVAaAps8b-NGnAto9JIP6PdnfyEDuUBHWaSLHeDMhPjP9c9QKkqlHnWYqOBSkj9nN0KKmzf4jf7nQU",
 		"VAPID_SUBJECT": "mailto:ghemoudz@gmail.com",
-		"NEXT_PUBLIC_APP_URL": "https://bowman-hub.bowmantechinc.workers.dev"
+		"NEXT_PUBLIC_APP_URL": "https://bowman-hub.bowmantechinc.workers.dev",
+		"EMAIL_PROVIDER": "gmail",
+		"GOOGLE_CLIENT_ID": "722905625965-3v6lckekt6jgflg77r5leuvepiu58eqg.apps.googleusercontent.com",
+		"GMAIL_SENDER_EMAIL": "bowmantechinc@gmail.com"
 	}
 }

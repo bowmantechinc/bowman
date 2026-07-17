@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSession } from "@/lib/auth/dal";
+import { requireSession, isProjectMember } from "@/lib/auth/dal";
 import { attachmentsRepo } from "@/lib/db/attachments";
+import { projectsRepo } from "@/lib/db/projects";
 import { uploadAttachmentFile, deleteAttachmentFile } from "@/lib/r2/storage";
 import type { ActionState } from "./types";
 
@@ -17,6 +18,10 @@ export async function uploadAttachment(
   const file = formData.get("file");
 
   if (!projectId) return { error: "Missing project." };
+
+  const project = await projectsRepo.get(projectId);
+  if (!project || !isProjectMember(project, session)) return { error: "You don't have access to this project." };
+
   if (!(file instanceof File) || file.size === 0) return { error: "Choose a file first." };
   if (file.size > MAX_SIZE) return { error: "File is larger than 5 MB." };
 
@@ -39,9 +44,13 @@ export async function uploadAttachment(
 }
 
 export async function deleteAttachment(id: string, projectId: string): Promise<void> {
-  await requireSession();
+  const session = await requireSession();
+  const project = await projectsRepo.get(projectId);
+  if (!project || !isProjectMember(project, session)) return;
+
   const attachment = await attachmentsRepo.get(id);
   if (attachment?.storagePath) await deleteAttachmentFile(attachment.storagePath);
   await attachmentsRepo.remove(id);
   revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/documents");
 }

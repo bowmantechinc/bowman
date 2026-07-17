@@ -17,7 +17,7 @@ import { tasksRepo } from "@/lib/db/tasks";
 import { risksRepo } from "@/lib/db/risks";
 import { membersRepo } from "@/lib/db/members";
 import { attachmentsRepo } from "@/lib/db/attachments";
-import { isManager } from "@/lib/auth/dal";
+import { isManager, isProjectMember } from "@/lib/auth/dal";
 import { getSession } from "@/lib/auth/session";
 import { removeProjectMember, addProjectMemberFromForm } from "@/lib/actions/projects";
 import { cn } from "@/lib/utils";
@@ -42,6 +42,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   if (!project) notFound();
 
   const canManage = session ? isManager(session.role) : false;
+  const canViewDocuments = session ? isProjectMember(project, session) : false;
   const projectTasks = tasks.filter((t) => t.projectId === project.id);
   const projectRisks = risks.filter((r) => r.projectId === project.id);
   const projectMembers = project.memberIds.map((mid) => members.find((m) => m.id === mid)).filter((m) => !!m);
@@ -206,7 +207,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             </CardContent>
           </Card>
 
-          <AttachmentsCard projectId={project.id} attachments={projectAttachments} />
+          {canViewDocuments && <AttachmentsCard projectId={project.id} attachments={projectAttachments} />}
         </div>
       </div>
     </div>

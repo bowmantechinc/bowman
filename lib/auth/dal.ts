@@ -19,3 +19,10 @@ export async function requireAdmin(): Promise<SessionPayload> {
 export function isManager(role: string): boolean {
   return role === "admin" || role === "lead";
 }
+
+export function isProjectMember(
+  project: { ownerId: string; memberIds: string[] },
+  session: SessionPayload
+): boolean {
+  return session.role === "admin" || project.ownerId === session.sub || project.memberIds.includes(session.sub);
+}

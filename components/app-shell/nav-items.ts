@@ -11,6 +11,7 @@ import {
   Boxes,
   Users,
   Settings,
+  Paperclip,
 } from "lucide-react";
 
 export interface NavItem {
@@ -35,6 +36,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Task Board", href: "/tasks", icon: KanbanSquare },
       { label: "Timeline", href: "/timeline", icon: GanttChartSquare },
       { label: "Reports", href: "/reports", icon: FileBarChart2 },
+      { label: "Documents", href: "/documents", icon: Paperclip },
     ],
   },
   {

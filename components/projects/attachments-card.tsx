@@ -9,18 +9,7 @@ import { Button } from "@/components/ui/button";
 import { uploadAttachment, deleteAttachment } from "@/lib/actions/attachments";
 import { INITIAL_ACTION_STATE } from "@/lib/actions/types";
 import type { Attachment } from "@/lib/db/attachments";
-
-function formatBytes(bytes: number) {
-  if (!bytes) return "0 B";
-  const units = ["B", "KB", "MB", "GB"];
-  let size = bytes;
-  let i = 0;
-  while (size >= 1024 && i < units.length - 1) {
-    size /= 1024;
-    i++;
-  }
-  return `${size.toFixed(i ? 1 : 0)} ${units[i]}`;
-}
+import { formatBytes } from "@/lib/utils";
 
 export function AttachmentsCard({ projectId, attachments }: { projectId: string; attachments: Attachment[] }) {
   const formRef = useRef<HTMLFormElement>(null);

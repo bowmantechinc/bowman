@@ -8,6 +8,7 @@ import { computeTimelineRows } from "@/lib/timeline";
 import { tasksRepo } from "@/lib/db/tasks";
 import { projectsRepo } from "@/lib/db/projects";
 import { membersRepo } from "@/lib/db/members";
+import { RelatedArticlesCard } from "@/components/knowledge/related-articles-card";
 
 export const metadata: Metadata = { title: "Timeline" };
 
@@ -38,6 +39,9 @@ export default async function TimelinePage({
   return (
     <div>
       <PageHeader title="Timeline" description="Project schedules derived from task due dates." />
+
+      <RelatedArticlesCard view="/timeline" />
+
       {rows.length === 0 ? (
         <EmptyState
           icon={GanttChartSquare}

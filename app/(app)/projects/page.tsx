@@ -13,6 +13,7 @@ import { tasksRepo, averageProgress } from "@/lib/db/tasks";
 import { membersRepo } from "@/lib/db/members";
 import { isManager } from "@/lib/auth/dal";
 import { getSession } from "@/lib/auth/session";
+import { RelatedArticlesCard } from "@/components/knowledge/related-articles-card";
 
 export const metadata: Metadata = { title: "Projects" };
 
@@ -33,6 +34,8 @@ export default async function ProjectsPage() {
         description={`${projects.length} project${projects.length === 1 ? "" : "s"}`}
         actions={canManage ? <ProjectFormDialog members={members} /> : undefined}
       />
+
+      <RelatedArticlesCard view="/projects" />
 
       {projects.length === 0 ? (
         <EmptyState

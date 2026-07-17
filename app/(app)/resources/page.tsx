@@ -9,6 +9,7 @@ import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { RESOURCE_ICONS } from "@/components/resources/resource-icons";
 import { deleteResource } from "@/lib/actions/resources";
 import { resourcesRepo } from "@/lib/db/resources";
+import { RelatedArticlesCard } from "@/components/knowledge/related-articles-card";
 
 export const metadata: Metadata = { title: "Resources" };
 
@@ -22,6 +23,8 @@ export default async function ResourcesPage() {
         description={`${resources.length} resource${resources.length === 1 ? "" : "s"}`}
         actions={<ResourceFormDialog />}
       />
+
+      <RelatedArticlesCard view="/resources" />
 
       {resources.length === 0 ? (
         <EmptyState icon={Boxes} title="No resources yet" description="Track tools, systems, or deliverables here." />

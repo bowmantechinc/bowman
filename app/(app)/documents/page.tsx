@@ -10,6 +10,7 @@ import { attachmentsRepo } from "@/lib/db/attachments";
 import { projectsRepo } from "@/lib/db/projects";
 import { formatBytes } from "@/lib/utils";
 import { requireSession, isProjectMember } from "@/lib/auth/dal";
+import { RelatedArticlesCard } from "@/components/knowledge/related-articles-card";
 
 export const metadata: Metadata = { title: "Documents" };
 
@@ -28,6 +29,8 @@ export default async function DocumentsPage() {
         title="Documents"
         description={`${sorted.length} file${sorted.length === 1 ? "" : "s"} across your projects`}
       />
+
+      <RelatedArticlesCard view="/documents" />
 
       {sorted.length === 0 ? (
         <EmptyState icon={Paperclip} title="No documents yet" description="Files uploaded to any project will show up here." />

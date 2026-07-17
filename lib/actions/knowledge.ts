@@ -4,14 +4,19 @@ import * as z from "zod";
 import { revalidatePath } from "next/cache";
 import { requireSession } from "@/lib/auth/dal";
 import { knowledgeRepo } from "@/lib/db/knowledge";
+import { NO_LINKED_VIEW } from "@/lib/constants";
 import type { ActionState } from "./types";
 
 const articleSchema = z.object({
   title: z.string().trim().min(1, { error: "Title is required." }),
   body: z.string().trim().optional().default(""),
   tags: z.string().trim().optional().default(""),
-  linkedView: z.string().trim().optional().default(""),
+  linkedView: z.string().trim().optional().default(NO_LINKED_VIEW),
 });
+
+function normalizeLinkedView(value: string): string {
+  return value === NO_LINKED_VIEW ? "" : value;
+}
 
 function parseTags(raw: string): string[] {
   return raw
@@ -33,7 +38,7 @@ export async function createArticle(
     title: parsed.data.title,
     body: parsed.data.body,
     tags: parseTags(parsed.data.tags),
-    linkedView: parsed.data.linkedView,
+    linkedView: normalizeLinkedView(parsed.data.linkedView),
     createdBy: session.name,
     updatedAt: new Date().toISOString(),
   });
@@ -57,7 +62,7 @@ export async function updateArticle(
     title: parsed.data.title,
     body: parsed.data.body,
     tags: parseTags(parsed.data.tags),
-    linkedView: parsed.data.linkedView,
+    linkedView: normalizeLinkedView(parsed.data.linkedView),
     updatedAt: new Date().toISOString(),
   });
 

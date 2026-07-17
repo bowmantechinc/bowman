@@ -11,6 +11,7 @@ import { ToneBadge, PROJECT_STAGE_TONE } from "@/components/tone-badge";
 import { getDashboardData } from "@/lib/dashboard";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { RelatedArticlesCard } from "@/components/knowledge/related-articles-card";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -40,6 +41,8 @@ export default async function DashboardPage() {
   return (
     <div>
       <PageHeader title="Dashboard" description="A live overview of everything in flight." />
+
+      <RelatedArticlesCard view="/dashboard" />
 
       <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Overall Progress" value={`${data.overallPct}%`}>

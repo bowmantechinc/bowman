@@ -8,6 +8,7 @@ import { VendorFormDialog } from "@/components/vendors/vendor-form-dialog";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { deleteVendor } from "@/lib/actions/vendors";
 import { vendorsRepo } from "@/lib/db/vendors";
+import { RelatedArticlesCard } from "@/components/knowledge/related-articles-card";
 
 export const metadata: Metadata = { title: "Vendors" };
 
@@ -23,6 +24,8 @@ export default async function VendorsPage() {
         description={`${vendors.length} vendor${vendors.length === 1 ? "" : "s"}`}
         actions={<VendorFormDialog />}
       />
+
+      <RelatedArticlesCard view="/vendors" />
 
       {vendors.length === 0 ? (
         <EmptyState icon={Receipt} title="No vendors yet" description="Track vendor licenses and renewals here." />

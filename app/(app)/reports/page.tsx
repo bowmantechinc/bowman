@@ -17,6 +17,7 @@ import { membersRepo } from "@/lib/db/members";
 import { computeProjectReport } from "@/lib/reports";
 import { TASK_STATUSES } from "@/lib/constants";
 import { getSession } from "@/lib/auth/session";
+import { RelatedArticlesCard } from "@/components/knowledge/related-articles-card";
 
 export const metadata: Metadata = { title: "Reports" };
 
@@ -68,6 +69,8 @@ export default async function ReportsPage({
         }
         className="print:hidden"
       />
+
+      <RelatedArticlesCard view="/reports" className="print:hidden" />
 
       <div id="report-content" className="space-y-4">
         <div className="hidden print:block print:mb-4">

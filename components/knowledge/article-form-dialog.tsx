@@ -14,11 +14,13 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { createArticle, updateArticle } from "@/lib/actions/knowledge";
 import type { KnowledgeArticle } from "@/lib/db/knowledge";
 import { INITIAL_ACTION_STATE } from "@/lib/actions/types";
 import { useCloseOnSuccess } from "@/hooks/use-close-on-success";
+import { NAV_VIEWS, NO_LINKED_VIEW } from "@/lib/constants";
 
 export function ArticleFormDialog({ article }: { article?: KnowledgeArticle }) {
   const [open, setOpen] = useState(false);
@@ -68,7 +70,21 @@ export function ArticleFormDialog({ article }: { article?: KnowledgeArticle }) {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="linkedView">Related page (optional)</Label>
-              <Input id="linkedView" name="linkedView" defaultValue={article?.linkedView} placeholder="e.g. /projects" />
+              <Select name="linkedView" defaultValue={article?.linkedView || NO_LINKED_VIEW}>
+                <SelectTrigger id="linkedView" className="w-full">
+                  <SelectValue>
+                    {(value: string) => NAV_VIEWS.find((v) => v.value === value)?.label ?? "None"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_LINKED_VIEW}>None</SelectItem>
+                  {NAV_VIEWS.map((v) => (
+                    <SelectItem key={v.value} value={v.value}>
+                      {v.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>

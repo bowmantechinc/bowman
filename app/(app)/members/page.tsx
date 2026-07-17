@@ -20,6 +20,7 @@ import { invitesRepo } from "@/lib/db/invites";
 import { projectsRepo } from "@/lib/db/projects";
 import { getSession } from "@/lib/auth/session";
 import { isManager } from "@/lib/auth/dal";
+import { RelatedArticlesCard } from "@/components/knowledge/related-articles-card";
 
 export const metadata: Metadata = { title: "Members" };
 
@@ -76,6 +77,8 @@ export default async function MembersPage() {
           )
         }
       />
+
+      <RelatedArticlesCard view="/members" />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {members.map((m) => {

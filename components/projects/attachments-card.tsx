@@ -10,6 +10,7 @@ import { uploadAttachment, deleteAttachment } from "@/lib/actions/attachments";
 import { INITIAL_ACTION_STATE } from "@/lib/actions/types";
 import type { Attachment } from "@/lib/db/attachments";
 import { formatBytes } from "@/lib/utils";
+import { ALLOWED_ATTACHMENT_EXTENSIONS } from "@/lib/constants";
 
 export function AttachmentsCard({ projectId, attachments }: { projectId: string; attachments: Attachment[] }) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -27,11 +28,14 @@ export function AttachmentsCard({ projectId, attachments }: { projectId: string;
       <CardContent className="space-y-3">
         <form ref={formRef} action={formAction} className="flex items-center gap-2">
           <input type="hidden" name="projectId" value={projectId} />
-          <Input type="file" name="file" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.xlsx,.csv" className="flex-1" />
+          <Input type="file" name="file" accept={ALLOWED_ATTACHMENT_EXTENSIONS.join(",")} className="flex-1" />
           <SubmitButton className="w-auto">
             <Paperclip className="size-3.5" /> Upload
           </SubmitButton>
         </form>
+        <p className="text-muted-foreground text-xs">
+          Accepted: Excel, Word, PowerPoint (.pptx), PDF, JPG · Max 50 MB
+        </p>
         {state?.error && (
           <div className="bg-destructive/10 text-destructive flex items-center gap-2 rounded-md px-3 py-2 text-sm">
             <AlertCircle className="size-4 shrink-0" />

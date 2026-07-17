@@ -12,6 +12,7 @@ import { membersRepo } from "@/lib/db/members";
 import { labelsRepo } from "@/lib/db/labels";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { RelatedArticlesCard } from "@/components/knowledge/related-articles-card";
 
 export const metadata: Metadata = { title: "Task Board" };
 
@@ -46,6 +47,8 @@ export default async function TasksPage({
           )
         }
       />
+
+      <RelatedArticlesCard view="/tasks" />
 
       <div className="mb-4 flex flex-wrap items-center gap-1.5">
         <Link

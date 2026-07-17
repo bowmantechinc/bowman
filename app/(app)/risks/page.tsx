@@ -11,6 +11,7 @@ import { deleteRisk } from "@/lib/actions/risks";
 import { risksRepo } from "@/lib/db/risks";
 import { projectsRepo } from "@/lib/db/projects";
 import { membersRepo } from "@/lib/db/members";
+import { RelatedArticlesCard } from "@/components/knowledge/related-articles-card";
 
 export const metadata: Metadata = { title: "Risk Register" };
 
@@ -36,6 +37,8 @@ export default async function RisksPage({
         description={`${filtered.length} risk${filtered.length === 1 ? "" : "s"} · ${critical} critical`}
         actions={projects.length > 0 && <RiskFormDialog members={members} projects={projects} defaultProjectId={projectFilter} />}
       />
+
+      <RelatedArticlesCard view="/risks" />
 
       {filtered.length === 0 ? (
         <EmptyState icon={ShieldAlert} title="No risks logged" description="Track risks as they come up." />

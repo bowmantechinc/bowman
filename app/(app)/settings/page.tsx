@@ -10,6 +10,7 @@ import { rolesRepo } from "@/lib/db/roles";
 import { labelsRepo } from "@/lib/db/labels";
 import { membersRepo } from "@/lib/db/members";
 import { requireAdmin } from "@/lib/auth/dal";
+import { RelatedArticlesCard } from "@/components/knowledge/related-articles-card";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -25,6 +26,8 @@ export default async function SettingsPage() {
         description="Manage roles and labels available across the workspace."
         actions={<ToneBadge tone="purple">Admin only</ToneBadge>}
       />
+
+      <RelatedArticlesCard view="/settings" />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>

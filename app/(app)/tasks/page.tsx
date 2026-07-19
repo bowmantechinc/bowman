@@ -10,6 +10,8 @@ import { taskCommentsRepo } from "@/lib/db/taskComments";
 import { projectsRepo } from "@/lib/db/projects";
 import { membersRepo } from "@/lib/db/members";
 import { labelsRepo } from "@/lib/db/labels";
+import { getSession } from "@/lib/auth/session";
+import { isManager } from "@/lib/auth/dal";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { RelatedArticlesCard } from "@/components/knowledge/related-articles-card";
@@ -22,13 +24,16 @@ export default async function TasksPage({
   searchParams: Promise<{ project?: string; label?: string }>;
 }) {
   const { project: projectFilter, label: labelFilter } = await searchParams;
-  const [tasks, comments, projects, members, labels] = await Promise.all([
+  const [tasks, comments, projects, members, labels, session] = await Promise.all([
     tasksRepo.list(),
     taskCommentsRepo.list(),
     projectsRepo.list(),
     membersRepo.list(),
     labelsRepo.list(),
+    getSession(),
   ]);
+
+  const canManage = session ? isManager(session.role) : false;
 
   const filtered = tasks.filter(
     (t) => (!projectFilter || t.projectId === projectFilter) && (!labelFilter || t.labelId === labelFilter)
@@ -75,7 +80,7 @@ export default async function TasksPage({
           description="Tasks belong to a project. Create one from the Projects page."
         />
       ) : (
-        <KanbanBoard tasks={filtered} members={members} labels={labels} projects={projects} comments={comments} />
+        <KanbanBoard tasks={filtered} members={members} labels={labels} projects={projects} comments={comments} canManage={canManage} />
       )}
     </div>
   );

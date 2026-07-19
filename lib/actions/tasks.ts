@@ -2,7 +2,7 @@
 
 import * as z from "zod";
 import { revalidatePath } from "next/cache";
-import { requireSession } from "@/lib/auth/dal";
+import { requireSession, isManager } from "@/lib/auth/dal";
 import { tasksRepo, TASK_STATUSES, TASK_PRIORITIES } from "@/lib/db/tasks";
 import { taskCommentsRepo } from "@/lib/db/taskComments";
 import { membersRepo } from "@/lib/db/members";
@@ -162,7 +162,8 @@ export async function updateTaskStatus(id: string, status: (typeof TASK_STATUSES
 }
 
 export async function deleteTask(id: string, projectId: string): Promise<void> {
-  await requireSession();
+  const session = await requireSession();
+  if (!isManager(session.role)) throw new Error("Only admins and leads can delete tasks.");
   await tasksRepo.remove(id);
   revalidatePath("/tasks");
   revalidatePath("/timeline");

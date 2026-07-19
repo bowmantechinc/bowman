@@ -14,12 +14,8 @@ import { CalendarDays, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { MemberAvatar } from "@/components/member-avatar";
 import { ToneBadge, TASK_STATUS_LABEL } from "@/components/tone-badge";
-
-const PRIORITY_DOT_CLASS: Record<string, string> = {
-  low: "bg-emerald-500",
-  medium: "bg-amber-500",
-  high: "bg-red-500",
-};
+import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
+import { deleteTask } from "@/lib/actions/tasks";
 import { TaskDetailDialog } from "@/components/tasks/task-detail-dialog";
 import { updateTaskStatus } from "@/lib/actions/tasks";
 import { TASK_STATUSES, type TaskStatus } from "@/lib/constants";
@@ -29,6 +25,12 @@ import type { Member } from "@/lib/db/members";
 import type { Project } from "@/lib/db/projects";
 import type { Label } from "@/lib/db/labels";
 import { cn } from "@/lib/utils";
+
+const PRIORITY_DOT_CLASS: Record<string, string> = {
+  low: "bg-emerald-500",
+  medium: "bg-amber-500",
+  high: "bg-red-500",
+};
 
 function TaskCard({
   task,
@@ -160,12 +162,14 @@ export function KanbanBoard({
   labels,
   projects,
   comments,
+  canManage,
 }: {
   tasks: Task[];
   members: Member[];
   labels: Label[];
   projects: Project[];
   comments: TaskComment[];
+  canManage: boolean;
 }) {
   const [localTasks, setLocalTasks] = useState(tasks);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
@@ -224,6 +228,7 @@ export function KanbanBoard({
         projects={projects}
         labels={labels}
         comments={comments}
+        canManage={canManage}
       />
     </>
   );

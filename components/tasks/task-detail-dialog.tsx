@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
-import { AlertCircle, Send } from "lucide-react";
+import { AlertCircle, Send, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,10 +11,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { SubmitButton } from "@/components/auth/submit-button";
+import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { ToneBadge, TASK_STATUS_TONE, TASK_STATUS_LABEL, PRIORITY_TONE } from "@/components/tone-badge";
 import { MemberAvatar } from "@/components/member-avatar";
 import { TaskFormDialog } from "@/components/tasks/task-form-dialog";
-import { addTaskComment } from "@/lib/actions/tasks";
+import { addTaskComment, deleteTask } from "@/lib/actions/tasks";
 import { INITIAL_ACTION_STATE } from "@/lib/actions/types";
 import type { Task } from "@/lib/db/tasks";
 import type { TaskComment } from "@/lib/db/taskComments";
@@ -30,6 +31,7 @@ export function TaskDetailDialog({
   projects,
   labels,
   comments,
+  canManage,
 }: {
   task: Task | null;
   open: boolean;
@@ -38,6 +40,7 @@ export function TaskDetailDialog({
   projects: Project[];
   labels: Label[];
   comments: TaskComment[];
+  canManage: boolean;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction] = useActionState(addTaskComment, INITIAL_ACTION_STATE);
@@ -61,13 +64,21 @@ export function TaskDetailDialog({
         <DialogHeader>
           <div className="flex items-start justify-between gap-3 pr-10">
             <DialogTitle>{task.title}</DialogTitle>
-            <TaskFormDialog
-              task={task}
-              members={members}
-              projects={projects}
-              labels={labels}
-              trigger={<span className="text-xs">Edit</span>}
-            />
+            <div className="flex items-center gap-1.5">
+              {canManage && (
+                <ConfirmDeleteButton
+                  action={deleteTask.bind(null, task.id, task.projectId)}
+                  confirmMessage="Delete this task? This can't be undone."
+                />
+              )}
+              <TaskFormDialog
+                task={task}
+                members={members}
+                projects={projects}
+                labels={labels}
+                trigger={<span className="text-xs">Edit</span>}
+              />
+            </div>
           </div>
         </DialogHeader>
 

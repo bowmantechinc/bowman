@@ -10,6 +10,7 @@ import { ArticleFormDialog } from "@/components/knowledge/article-form-dialog";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { deleteArticle } from "@/lib/actions/knowledge";
 import { knowledgeRepo } from "@/lib/db/knowledge";
+import { RelatedArticlesCard } from "@/components/knowledge/related-articles-card";
 
 export const metadata: Metadata = { title: "Knowledge Base" };
 
@@ -35,6 +36,8 @@ export default async function KnowledgePage({
         description={`${articles.length} article${articles.length === 1 ? "" : "s"}`}
         actions={<ArticleFormDialog />}
       />
+
+      <RelatedArticlesCard view="/knowledge" />
 
       <form method="get" className="relative mb-5 max-w-sm">
         <Search className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />

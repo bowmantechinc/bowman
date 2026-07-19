@@ -63,7 +63,7 @@ export function TaskFormDialog({
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+        <DialogHeader className="pr-8">
           <DialogTitle>{task ? "Edit task" : "New task"}</DialogTitle>
           <DialogDescription>
             {task ? "Update this task." : "Add a task and assign it to someone."}

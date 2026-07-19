@@ -58,15 +58,17 @@ export function TaskDetailDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
-        <DialogHeader className="flex flex-row items-start justify-between gap-3">
-          <DialogTitle className="pr-8">{task.title}</DialogTitle>
-          <TaskFormDialog
-            task={task}
-            members={members}
-            projects={projects}
-            labels={labels}
-            trigger={<span className="text-xs">Edit</span>}
-          />
+        <DialogHeader>
+          <div className="flex items-start justify-between gap-3 pr-10">
+            <DialogTitle>{task.title}</DialogTitle>
+            <TaskFormDialog
+              task={task}
+              members={members}
+              projects={projects}
+              labels={labels}
+              trigger={<span className="text-xs">Edit</span>}
+            />
+          </div>
         </DialogHeader>
 
         <div className="flex flex-wrap gap-1.5">
